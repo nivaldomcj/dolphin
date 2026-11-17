@@ -72,21 +72,21 @@ export function Arrows({ root, board, laneOf, showInLane, layoutKey }: Props) {
     <svg class="arrows" width={size.w} height={size.h}>
       <defs>
         <marker id="mS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-          <path d="M0,0L10,5L0,10z" fill="#a0a0ac" />
+          <path d="M0,0L10,5L0,10z" style={{ fill: "var(--seq)" }} />
         </marker>
         <marker id="mB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-          <path d="M0,0L10,5L0,10z" fill="#1f47d6" />
+          <path d="M0,0L10,5L0,10z" style={{ fill: "var(--blk)" }} />
         </marker>
       </defs>
       {paths.map((p) =>
         p.kind === "seq" ? (
-          <path key={p.key} d={p.d} stroke="#a0a0ac" stroke-width="1.6" marker-end="url(#mS)" />
+          <path key={p.key} d={p.d} style={{ stroke: "var(--seq)" }} stroke-width="1.6" marker-end="url(#mS)" />
         ) : (
           <path
             key={p.key}
             d={p.d}
             fill="none"
-            stroke="#1f47d6"
+            style={{ stroke: "var(--blk)" }}
             stroke-width={p.kind === "cross" ? 2.2 : 1.4}
             stroke-dasharray={p.kind === "inlane" ? "5 4" : undefined}
             opacity={p.kind === "inlane" ? 0.75 : undefined}

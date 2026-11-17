@@ -41,8 +41,8 @@ interface LaneProps extends Omit<CardProps, "task" | "pos" | "mark"> {
 
 export function Lane({ lane, tasks, markOf, ...handlers }: LaneProps) {
   return (
-    <div class="lane" style={{ background: lane.bg }}>
-      <div class="lane-head" style={{ background: lane.head }}>
+    <div class="lane" style={{ "--lane-bg": lane.bg, "--lane-head": lane.head }}>
+      <div class="lane-head">
         Lane {lane.key}
         <small>{lane.name}</small>
         <small>{lane.ids.length} tasks</small>

@@ -1,15 +1,55 @@
 :root {
+  color-scheme: light;
   --bg: #f7f7f9;
   --fg: #1d1d24;
   --muted: #6b6b78;
   --line: #c9c9d3;
   --border: #2b3a8f;
+  --board-bg: #ffffff;
+  --input-bg: #ffffff;
+  --card-fg: #1d1d24;
   --s-progress: #ffe45c;
   --s-blocked: #f47c7c;
   --s-todo: #ffffff;
   --s-done: #8fb8ff;
   --seq: #a0a0ac;
   --blk: #1f47d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #131317;
+    --fg: #e6e6ec;
+    --muted: #9a9aa8;
+    --line: #2e2e38;
+    --border: #4a5fc4;
+    --board-bg: #18181d;
+    --input-bg: #222229;
+    --card-fg: #e6e6ec;
+    --s-progress: #5e4f14;
+    --s-blocked: #6b2128;
+    --s-todo: #1f1f26;
+    --s-done: #1f3a7a;
+    --seq: #6e6e7c;
+    --blk: #6f8cff;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #131317;
+  --fg: #e6e6ec;
+  --muted: #9a9aa8;
+  --line: #2e2e38;
+  --border: #4a5fc4;
+  --board-bg: #18181d;
+  --input-bg: #222229;
+  --card-fg: #e6e6ec;
+  --s-progress: #5e4f14;
+  --s-blocked: #6b2128;
+  --s-todo: #1f1f26;
+  --s-done: #1f3a7a;
+  --seq: #6e6e7c;
+  --blk: #6f8cff;
 }
 * { box-sizing: border-box; }
 html, body, #app { height: 100%; }
@@ -21,15 +61,25 @@ header { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 1
 h1 { font-size: 16px; margin: 0; }
 .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 12px; color: var(--muted); }
 .sw { display: inline-block; width: 22px; height: 14px; border: 1.5px solid var(--border); border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
-.sw.dash { border-style: dashed; background: #fff; }
+.sw.dash { border-style: dashed; background: var(--board-bg); }
 .ln { display: inline-block; width: 26px; height: 0; border-top: 2px solid; vertical-align: 3px; margin-right: 4px; }
 .hint { font-size: 12px; color: var(--muted); }
 .controls { display: flex; gap: 12px; align-items: center; margin-left: auto; font-size: 13px; }
-input[type="search"] { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; width: 220px; font: inherit; }
+input[type="search"] { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; width: 220px; font: inherit; background: var(--input-bg); color: var(--fg); }
+select.theme { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: var(--input-bg); color: var(--fg); }
 
 .scroller { flex: 1; overflow: auto; }
-.board { position: relative; display: flex; flex-direction: column; min-width: 100%; width: max-content; min-height: 100%; background: #fff; }
-.lane { flex: 1; display: flex; align-items: stretch; border-top: 1px solid var(--line); }
+.board { position: relative; display: flex; flex-direction: column; min-width: 100%; width: max-content; min-height: 100%; background: var(--board-bg); }
+.lane { flex: 1; display: flex; align-items: stretch; border-top: 1px solid var(--line);
+        background: var(--lane-bg); }
+.lane-head { background: var(--lane-head); }
+/* Lane colors come from the data as pastels; in dark mode keep each hue but force a dark lightness. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lane { background: oklch(from var(--lane-head) 0.22 calc(c * 0.6) h); }
+  :root:not([data-theme="light"]) .lane-head { background: oklch(from var(--lane-head) 0.3 calc(c * 0.8) h); }
+}
+:root[data-theme="dark"] .lane { background: oklch(from var(--lane-head) 0.22 calc(c * 0.6) h); }
+:root[data-theme="dark"] .lane-head { background: oklch(from var(--lane-head) 0.3 calc(c * 0.8) h); }
 .lane:first-child { border-top: 0; }
 .lane-head { position: sticky; left: 0; z-index: 3; width: 190px; min-width: 190px; padding: 10px 12px; font-weight: 600;
              display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--line); }
@@ -37,7 +87,7 @@ input[type="search"] { padding: 5px 8px; border: 1px solid var(--line); border-r
 .cards { flex: 1; display: flex; gap: 34px; padding: 22px 24px; align-items: center; }
 
 .card { position: relative; z-index: 2; width: 190px; padding: 9px 10px; font-weight: 600; font-size: 13px;
-        border: 1.5px solid var(--border); border-radius: 5px; text-decoration: none; color: var(--fg);
+        border: 1.5px solid var(--border); border-radius: 5px; text-decoration: none; color: var(--card-fg);
         transition: transform 0.1s, box-shadow 0.1s, opacity 0.15s; }
 .card .id { display: block; }
 .card .ttl { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;

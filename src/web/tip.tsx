@@ -12,7 +12,7 @@ interface Props {
 /** Hover card that follows the pointer and flips to stay inside the window. */
 export function Tip({ task: t, x, y, waitsFor, blocks }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ left: x + 14, top: y + 16 });
+  const [pos, setPos] = useState({ left: `${x + 14}px`, top: `${y + 16}px` });
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -20,7 +20,7 @@ export function Tip({ task: t, x, y, waitsFor, blocks }: Props) {
     let left = x + 14, top = y + 16;
     if (left + el.offsetWidth > innerWidth - 8) left = x - el.offsetWidth - 14;
     if (top + el.offsetHeight > innerHeight - 8) top = y - el.offsetHeight - 16;
-    setPos({ left, top });
+    setPos({ left: `${left}px`, top: `${top}px` });
   }, [x, y, t.id]);
 
   return (
