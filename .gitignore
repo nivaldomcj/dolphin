@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+
+# The database holds task titles from work trackers. Never commit it.
+*.db
+*.db-shm
+*.db-wal
+
+# Board snapshots used by `bun run import`.
+data*.json
