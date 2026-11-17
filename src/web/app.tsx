@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { Board } from "../types";
 import { Arrows } from "./arrows";
 import { Lane, type Mark } from "./lane";
-import { usePref } from "./prefs";
+import { usePref, useStringPref } from "./prefs";
 import { Tip } from "./tip";
 
 function Legend() {
@@ -26,9 +26,15 @@ function App() {
   const [titles, setTitles] = usePref("titles", true);
   const [positions, setPositions] = usePref("positions", true);
   const [inLane, setInLane] = usePref("inLane", false);
+  const [theme, setTheme] = useStringPref("theme", "system");
   const [query, setQuery] = useState("");
   const [focus, setFocus] = useState<{ id: string; x: number; y: number } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (theme === "system") delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   useEffect(() => {
     fetch("/api/board")
@@ -78,6 +84,11 @@ function App() {
           <label><input type="checkbox" checked={positions} onChange={(e) => setPositions(e.currentTarget.checked)} /> Show positions</label>
           <label><input type="checkbox" checked={inLane} onChange={(e) => setInLane(e.currentTarget.checked)} /> Show in-lane blockers</label>
           <input type="search" placeholder="Search ID, title or app" value={query} onInput={(e) => setQuery(e.currentTarget.value)} />
+          <select class="theme" value={theme} onChange={(e) => setTheme(e.currentTarget.value)} aria-label="Theme">
+            <option value="light">☀️ Light</option>
+            <option value="dark">🌙 Dark</option>
+            <option value="system">🖥️ System</option>
+          </select>
         </div>
       </header>
       <div class={`scroller${titles ? "" : " notitle"}${positions ? "" : " nopos"}`}>
