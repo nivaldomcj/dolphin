@@ -39,7 +39,8 @@ db.transaction(() => {
   for (const [id, t] of Object.entries(snap.tasks)) {
     const { title, status, url, closed, ...meta } = t;
     const source = id.startsWith("ENG-") ? "linear" : "github";
-    const href = url ?? `https://linear.app/acme/issue/${id}`;
+    const href = url ?? (source === "linear" ? `https://linear.app/acme/issue/${id}` : undefined);
+    if (!href) throw new Error(`${id}: a GitHub task needs a url in the snapshot`);
     insertTask.run(id, source, title, status, href, closed ? 1 : 0, JSON.stringify(meta));
   }
 

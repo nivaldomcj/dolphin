@@ -5,6 +5,8 @@ Claude arranges the lanes through an MCP server; the page shows them.
 
 ## Run
 
+Needs Bun 1.4.4 or later: `bun run typecheck` calls `bun check`, which older Bun versions do not have.
+
 ```sh
 bun install
 bun run import path/to/data.json   # once: load a board snapshot into dolphin.db

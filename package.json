@@ -2,6 +2,9 @@
   "name": "dolphin",
   "private": true,
   "type": "module",
+  "engines": {
+    "bun": ">=1.4.4"
+  },
   "scripts": {
     "dev": "bun --hot src/server.ts",
     "start": "bun src/server.ts",
