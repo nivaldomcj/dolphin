@@ -1,5 +1,5 @@
 import index from "./web/index.html";
-import { readBoard } from "./db";
+import { readBoard } from "./board";
 import { handleMcp } from "./mcp";
 import { refresh } from "./refresh";
 
@@ -11,8 +11,8 @@ const server = Bun.serve({
   idleTimeout: 60,
   routes: {
     "/": index,
-    "/api/board": () => Response.json(readBoard()),
-    "/api/refresh": { POST: async () => Response.json({ summary: await refresh(), board: readBoard() }) },
+    "/api/board": async () => Response.json(await readBoard()),
+    "/api/refresh": { POST: async () => Response.json({ summary: await refresh(), board: await readBoard() }) },
     "/mcp": handleMcp,
   },
 });

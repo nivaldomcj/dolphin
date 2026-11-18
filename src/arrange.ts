@@ -1,4 +1,6 @@
+import { type Kysely, sql } from "kysely";
 import { db } from "./db";
+import type { DB } from "./db/schema";
 import { RELEASE_LANE } from "./rules";
 import type { TaskMeta } from "./types";
 
@@ -8,41 +10,49 @@ export interface ArrangeResult {
   warnings: string[];
 }
 
+/** The root handle or an open transaction. */
+type Q = Kysely<DB>;
+
 interface Placement { task_id: string; lane_key: string; pos: number }
 
-const laneIds = (lane: string): string[] =>
-  db.query<{ task_id: string }, [string]>("SELECT task_id FROM placement WHERE lane_key = ? ORDER BY pos").all(lane).map((r) => r.task_id);
-
-const placementOf = (id: string): Placement | null =>
-  db.query<Placement, [string]>("SELECT task_id, lane_key, pos FROM placement WHERE task_id = ?").get(id);
-
-function assertTask(id: string): void {
-  if (!db.query("SELECT 1 FROM task WHERE id = ?").get(id)) throw new Error(`Unknown task ${id}`);
+async function laneIds(q: Q, lane: string): Promise<string[]> {
+  const rows = await q.selectFrom("placement").select("task_id").where("lane_key", "=", lane).orderBy("pos").execute();
+  return rows.map((r) => r.task_id);
 }
 
-function assertLane(key: string): void {
-  if (!db.query("SELECT 1 FROM lane WHERE key = ?").get(key)) throw new Error(`Unknown lane ${key}`);
+const placementOf = (q: Q, id: string): Promise<Placement | undefined> =>
+  q.selectFrom("placement").selectAll().where("task_id", "=", id).executeTakeFirst();
+
+async function assertTask(id: string): Promise<void> {
+  if (!(await db.selectFrom("task").select("id").where("id", "=", id).executeTakeFirst())) throw new Error(`Unknown task ${id}`);
 }
 
-const clearLane = db.prepare("DELETE FROM placement WHERE lane_key = ?");
-const deletePlacement = db.prepare("DELETE FROM placement WHERE task_id = ?");
-const insertPlacement = db.prepare("INSERT INTO placement (task_id, lane_key, pos) VALUES (?, ?, ?)");
+async function assertLane(key: string): Promise<void> {
+  if (!(await db.selectFrom("lane").select("key").where("key", "=", key).executeTakeFirst())) throw new Error(`Unknown lane ${key}`);
+}
 
 /** Makes `ids` the exact content of a lane, positions 0..n-1. A listed task placed elsewhere moves here. */
-function writeLane(lane: string, ids: string[]): void {
-  clearLane.run(lane);
-  for (const id of ids) deletePlacement.run(id);
-  ids.forEach((id, pos) => insertPlacement.run(id, lane, pos));
+async function writeLane(q: Q, lane: string, ids: string[]): Promise<void> {
+  await q.deleteFrom("placement").where("lane_key", "=", lane).execute();
+  if (ids.length === 0) return;
+  await q.deleteFrom("placement").where("task_id", "in", ids).execute();
+  await q.insertInto("placement").values(ids.map((task_id, pos) => ({ task_id, lane_key: lane, pos }))).execute();
 }
 
 /** Checks the board against the hard rules and returns one line per breach. */
-export function checkRules(): string[] {
-  const rows = db
-    .query<Placement & { kind: string | null; app: string | null }, []>(
-      `SELECT p.task_id, p.lane_key, p.pos, json_extract(t.meta, '$.kind') AS kind, json_extract(t.meta, '$.app') AS app
-       FROM placement p JOIN task t ON t.id = p.task_id WHERE t.closed = 0`,
-    )
-    .all();
+export async function checkRules(): Promise<string[]> {
+  const rows = await db
+    .selectFrom("placement as p")
+    .innerJoin("task as t", "t.id", "p.task_id")
+    .select([
+      "p.task_id",
+      "p.lane_key",
+      "p.pos",
+      sql<string | null>`json_extract(t.meta, '$.kind')`.as("kind"),
+      sql<string | null>`json_extract(t.meta, '$.app')`.as("app"),
+    ])
+    .where("t.closed", "=", 0)
+    .execute();
   const at = new Map(rows.map((r) => [r.task_id, r]));
   const warnings: string[] = [];
 
@@ -52,7 +62,7 @@ export function checkRules(): string[] {
     }
   }
 
-  for (const { a, b } of db.query<{ a: string; b: string }, []>("SELECT a, b FROM edge").all()) {
+  for (const { a, b } of await db.selectFrom("edge").select(["a", "b"]).execute()) {
     const pa = at.get(a), pb = at.get(b);
     if (!pa || !pb) continue;
     const where = (p: Placement) => `${p.lane_key}#${p.pos + 1}`;
@@ -65,51 +75,52 @@ export function checkRules(): string[] {
   return warnings;
 }
 
-const result = (done: string): ArrangeResult => ({ done, warnings: checkRules() });
+const result = async (done: string): Promise<ArrangeResult> => ({ done, warnings: await checkRules() });
 
 /**
  * Moves a task to a lane at a 1-based position (default: the end). Works for unplaced tasks and moves inside a lane.
  */
-export function placeTask(id: string, lane: string, position?: number): ArrangeResult {
-  assertTask(id);
-  assertLane(lane);
-  db.transaction(() => {
-    const from = placementOf(id);
-    if (from) writeLane(from.lane_key, laneIds(from.lane_key).filter((x) => x !== id));
-    const ids = laneIds(lane);
+export async function placeTask(id: string, lane: string, position?: number): Promise<ArrangeResult> {
+  await assertTask(id);
+  await assertLane(lane);
+  await db.transaction().execute(async (trx) => {
+    const from = await placementOf(trx, id);
+    if (from) await writeLane(trx, from.lane_key, (await laneIds(trx, from.lane_key)).filter((x) => x !== id));
+    const ids = await laneIds(trx, lane);
     const index = position === undefined ? ids.length : Math.min(Math.max(position - 1, 0), ids.length);
     ids.splice(index, 0, id);
-    writeLane(lane, ids);
-  })();
-  const pos = laneIds(lane).indexOf(id) + 1;
+    await writeLane(trx, lane, ids);
+  });
+  const pos = (await laneIds(db, lane)).indexOf(id) + 1;
   return result(`${id} is now ${lane}#${pos}.`);
 }
 
 /** Sets the full order of a lane. The list must hold exactly the lane's current tasks. */
-export function reorderLane(lane: string, ids: string[]): ArrangeResult {
-  assertLane(lane);
-  const current = laneIds(lane);
+export async function reorderLane(lane: string, ids: string[]): Promise<ArrangeResult> {
+  await assertLane(lane);
+  const current = await laneIds(db, lane);
   const missing = current.filter((id) => !ids.includes(id));
   const extra = ids.filter((id) => !current.includes(id));
   if (missing.length || extra.length || new Set(ids).size !== ids.length) {
     throw new Error(`Lane ${lane} order must list its ${current.length} tasks once each. Missing: ${missing.join(", ") || "none"}. Not in lane: ${extra.join(", ") || "none"}.`);
   }
-  db.transaction(() => writeLane(lane, ids))();
+  await db.transaction().execute((trx) => writeLane(trx, lane, ids));
   return result(`Lane ${lane} reordered (${ids.length} tasks).`);
 }
 
 /** Takes a task out of its lane. An open task then shows in lane N; a closed one disappears. */
-export function unplaceTask(id: string): ArrangeResult {
-  assertTask(id);
-  const from = placementOf(id);
+export async function unplaceTask(id: string): Promise<ArrangeResult> {
+  await assertTask(id);
+  const from = await placementOf(db, id);
   if (!from) return result(`${id} was not placed.`);
-  db.transaction(() => writeLane(from.lane_key, laneIds(from.lane_key).filter((x) => x !== id)))();
+  await db.transaction().execute(async (trx) => writeLane(trx, from.lane_key, (await laneIds(trx, from.lane_key)).filter((x) => x !== id)));
   return result(`${id} removed from lane ${from.lane_key}.`);
 }
 
-/** True when b can already reach a through edges, so a → b would close a loop. */
-function reaches(from: string, to: string): boolean {
-  const next = db.query<{ b: string }, [string]>("SELECT b FROM edge WHERE a = ?");
+/** True when `from` can already reach `to` through edges. */
+async function reaches(from: string, to: string): Promise<boolean> {
+  const edges = await db.selectFrom("edge").select(["a", "b"]).execute();
+  const next = Map.groupBy(edges, (e) => e.a);
   const seen = new Set<string>();
   const stack = [from];
   while (stack.length) {
@@ -117,39 +128,39 @@ function reaches(from: string, to: string): boolean {
     if (id === to) return true;
     if (seen.has(id)) continue;
     seen.add(id);
-    for (const { b } of next.all(id)) stack.push(b);
+    for (const e of next.get(id) ?? []) stack.push(e.b);
   }
   return false;
 }
 
 /** Records that `blocker` must finish before `blocked` can start. */
-export function addEdge(blocker: string, blocked: string): ArrangeResult {
-  assertTask(blocker);
-  assertTask(blocked);
+export async function addEdge(blocker: string, blocked: string): Promise<ArrangeResult> {
+  await assertTask(blocker);
+  await assertTask(blocked);
   if (blocker === blocked) throw new Error("A task cannot block itself.");
-  if (reaches(blocked, blocker)) throw new Error(`${blocked} already leads to ${blocker}; adding this edge makes a loop.`);
-  db.run("INSERT OR IGNORE INTO edge (a, b) VALUES (?, ?)", [blocker, blocked]);
+  if (await reaches(blocked, blocker)) throw new Error(`${blocked} already leads to ${blocker}; adding this edge makes a loop.`);
+  await db.insertInto("edge").values({ a: blocker, b: blocked }).onConflict((oc) => oc.doNothing()).execute();
   return result(`${blocker} now blocks ${blocked}.`);
 }
 
-export function removeEdge(blocker: string, blocked: string): ArrangeResult {
-  const { changes } = db.run("DELETE FROM edge WHERE a = ? AND b = ?", [blocker, blocked]);
-  return result(changes ? `${blocker} no longer blocks ${blocked}.` : `There was no edge ${blocker} → ${blocked}.`);
+export async function removeEdge(blocker: string, blocked: string): Promise<ArrangeResult> {
+  const { numDeletedRows } = await db.deleteFrom("edge").where("a", "=", blocker).where("b", "=", blocked).executeTakeFirst();
+  return result(numDeletedRows > 0n ? `${blocker} no longer blocks ${blocked}.` : `There was no edge ${blocker} → ${blocked}.`);
 }
 
-export function renameLane(key: string, name: string): ArrangeResult {
-  assertLane(key);
-  db.run("UPDATE lane SET name = ? WHERE key = ?", [name, key]);
+export async function renameLane(key: string, name: string): Promise<ArrangeResult> {
+  await assertLane(key);
+  await db.updateTable("lane").set({ name }).where("key", "=", key).execute();
   return result(`Lane ${key} is now "${name}".`);
 }
 
 /** Sets the free-text note shown in the card's tooltip. An empty note removes it. */
-export function setNote(id: string, note: string): ArrangeResult {
-  assertTask(id);
-  const row = db.query<{ meta: string }, [string]>("SELECT meta FROM task WHERE id = ?").get(id)!;
+export async function setNote(id: string, note: string): Promise<ArrangeResult> {
+  await assertTask(id);
+  const row = await db.selectFrom("task").select("meta").where("id", "=", id).executeTakeFirstOrThrow();
   const meta = JSON.parse(row.meta) as TaskMeta;
   if (note) meta.note = note;
   else delete meta.note;
-  db.run("UPDATE task SET meta = ? WHERE id = ?", [JSON.stringify(meta), id]);
+  await db.updateTable("task").set({ meta: JSON.stringify(meta) }).where("id", "=", id).execute();
   return result(note ? `Note set on ${id}.` : `Note removed from ${id}.`);
 }
