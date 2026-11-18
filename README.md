@@ -3,17 +3,25 @@
 A local companion page that splits my open tasks (Linear, GitHub Projects) into parallel lanes, so I can work on
 several tasks at the same time. Claude arranges the lanes through an MCP server; the page shows them.
 
-![dolphin with the settings menu open, privacy mode on and the legend bar shown](docs/screenshot.png)
+![dolphin showing a made-up demo board: five lanes of cards, status colors, and blocker arrows](docs/demo.png)
 
-_Privacy mode is on in the screenshot: titles and lane names are hidden._
+_The screenshot shows the demo board from `bun run seed:demo`. Every task in it is made up._
 
 ## Run
 
 Needs Bun 1.4.4 or later: `bun run typecheck` calls `bun check`, which older Bun versions do not have.
 
 ```sh
-bun install
+bun install                        # also installs the git hooks (see "Keep work names out of git")
+cp dolphin.config.example.ts dolphin.config.ts   # then fill in your own values
 bun run dev                        # http://dolphin.localhost:4747
+```
+
+To try it without any tracker:
+
+```sh
+bun run seed:demo                  # writes a made-up board to demo.db
+bun run demo                       # http://dolphin.localhost:4750, no tracker calls, no backups
 ```
 
 Open the page at http://dolphin.localhost:4747. Browsers send every `*.localhost` name to your own machine, so
@@ -38,7 +46,8 @@ has lanes it stops unless you add `--force`.
 | Dependencies | Set by hand or by Claude, never copied from Linear relations | Tracker relations across lanes read as noise. Someone has to decide which links matter. |
 | Linear | GraphQL through `fetch`, key in the macOS Keychain | No SDK and no `.env` file. |
 | GitHub | `gh api graphql` | Reuses the `gh` login, so no token to store. |
-| Lane rules | One string in `src/core/rules.ts` | Lanes are renamed every cycle. A rule engine would be overkill. |
+| Lane rules | Free text plus "pins", in the database, edited through MCP | Rules name real projects, so they stay out of git. A rule engine would be overkill. |
+| Settings | `dolphin.config.ts`, git-ignored, typed by `defineConfig` | The tracker projects and the denylist are private. The example file is the documentation. |
 
 ## Page
 
@@ -56,13 +65,16 @@ text keeps the glyph shapes and can sometimes be recovered. Settings are kept in
 
 ## Refresh
 
-The 🔁 button (and the MCP `refresh` tool) pulls task statuses from Linear and from the UNI GitHub project. It
+The 🔁 button (and the MCP `refresh` tool) pulls task statuses from Linear and from the GitHub project in `dolphin.config.ts`. It
 writes titles and statuses only: lanes, positions and dependencies stay as they are. Open tasks the board does not
 know show in lane N. A refresh takes about 9 s, most of it waiting on GitHub.
 
 - Linear reads a personal API key from `$LINEAR_API_KEY`, else from the macOS Keychain. Store it once:
   `security add-generic-password -s dolphin-linear-api-key -a "$USER" -w`
-- GitHub uses the `gh` CLI and its existing login. The project is set in `src/sources/github.ts`.
+- GitHub uses the `gh` CLI and its existing login. Set the project in the `github` block of `dolphin.config.ts`:
+  the organization, the project number, your login, the repository, the id prefix and the open status columns.
+  Leave the block out to skip GitHub. `linear: false` skips Linear.
+- Card colors come from the status: Linear's own names have a color, and `tones` in the config adds yours.
 
 If one source fails, the other still applies, and the toast shows the error. A Linear task that Linear no longer
 returns (deleted, or out of your key's reach) is closed with the status "Not found in Linear", so its card fades.
@@ -78,6 +90,8 @@ claude mcp add --transport http dolphin http://127.0.0.1:4747/mcp
 Tools:
 
 - `get_board`: the rules, the lanes in order, the edges and the current rule warnings. Read it before arranging.
+- `get_rules` and `set_rules`: the rules text Claude follows, and the pins. A pin keeps the tasks whose meta matches
+  its `kind` and `app` in one lane, for example every release run in lane A.
 - `refresh`: the same pull as the 🔁 button.
 - `place_task` (id, lane, 1-based position), `reorder_lane` (lane, full id list), `unplace_task` (back to lane N).
 - `add_edge` and `remove_edge` (blocker, blocked). A loop is rejected.
@@ -87,7 +101,7 @@ The API and MCP routes accept only requests addressed to `127.0.0.1`, `localhost
 server's port, so a web page cannot reach them through DNS rebinding.
 
 Every write returns what it did and the rule warnings for the whole board: a blocker after the task it blocks,
-a cross-lane blocker that is not earlier, and a release outside lane A. Warnings never block a write.
+a cross-lane blocker that is not earlier, and a pinned task outside its lane. Warnings never block a write.
 
 ## Database
 
@@ -103,6 +117,22 @@ To change the schema:
 
 Never edit a migration that already ran on your `dolphin.db`; write a new one. In Kysely 0.29, `Migrator` and
 `Migration` come from `kysely/migration`.
+
+## Backup
+
+The database lives on your machine only. The server copies it once a day, at start and after a refresh, to
+`<dir>/YYYY-MM-DD/dolphin.db` with your `dolphin.config.ts` next to it, and keeps the newest 14 days. The default
+`<dir>` is `~/Library/Mobile Documents/com~apple~CloudDocs/dolphin`, so iCloud Drive syncs it. Set `backup` in the
+config to change the folder or the count, or `backup: false` to turn it off. `bun run backup` writes today's copy now.
+
+To restore, stop the server, then copy a backup over `dolphin.db` and delete `dolphin.db-wal` and `dolphin.db-shm`.
+
+## Keep work names out of git
+
+Task titles, rules and project names stay in `dolphin.db` and `dolphin.config.ts`, which git ignores. The
+`denylist` in the config lists the words that must never reach a commit: your employer, clients and projects.
+`bun install` copies two hooks from `.githooks/` into `.git/hooks/`: `pre-commit` scans the added lines and
+`commit-msg` scans the message. `bun run check:private` scans every tracked file.
 
 ## Styling
 
@@ -125,15 +155,16 @@ bun test   # runs on an in-memory database (test-setup.ts), never on dolphin.db
 - `src/server/`: `index.ts` (the `Bun.serve` routes: `/`, `/api/board`, `POST /api/refresh`, `/mcp`), `mcp.ts` (the MCP
   tools) and `guard.ts` (the Host/Origin check every API and MCP route goes through).
 - `src/core/`: the board logic, with no HTTP. `board.ts` reads the board, `arrange.ts` holds the writes behind the MCP
-  tools and the rule checks, `refresh.ts` applies tracker facts, `rules.ts` holds the lane rules. Tests sit next to them.
+  tools and the rule checks, `refresh.ts` applies tracker facts, `rules.ts` reads and writes the lane rules, `backup.ts` writes the daily copy. Tests sit next to them.
 - `src/sources/`: one fetcher per tracker (Linear, GitHub).
 - `src/db/`: the Kysely setup, the `bun:sqlite` adapter, the row types and `migrations/`.
-- `src/scripts/import.ts`: load a `data.json` snapshot (`bun run import <file>`). It refuses to replace a board that
-  has lanes unless you add `--force`.
+- `src/scripts/`: `import.ts` loads a `data.json` snapshot (it refuses to replace a board that has lanes unless you
+  add `--force`), `seed-demo.ts` writes the demo board, `backup.ts`, `check-private.ts` and `install-hooks.ts`.
+- `src/config.ts` loads `dolphin.config.ts`; `src/define-config.ts` holds its types.
 - `src/web/`: the Preact page. `app.tsx` is the layout; `hooks/` holds the state (board, search, collapsed lanes,
   display settings) and `components/` the parts of the page. `app.css` is the CSS entry; `board.css` holds the
   board styles.
 - `src/types.ts`: the types shared by the server and the page.
 
 Task facts (title, status) come from the trackers. Lanes, positions and dependencies are set by hand or by Claude.
-`dolphin.db` and `data*.json` hold work data and are git-ignored.
+`dolphin.db`, `dolphin.config.ts` and `data*.json` hold work data and are git-ignored.

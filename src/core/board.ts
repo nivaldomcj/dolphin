@@ -1,3 +1,4 @@
+import { toneOf } from "../config";
 import { db } from "../db";
 import type { Board, Lane, Task, TaskMeta } from "../types";
 
@@ -16,7 +17,7 @@ export async function readBoard(): Promise<Board> {
   const tasks: Record<string, Task> = {};
   for (const r of rows) {
     const meta = JSON.parse(r.meta) as TaskMeta;
-    tasks[r.id] = { ...meta, id: r.id, source: r.source, title: r.title, status: r.status, url: r.url, closed: r.closed === 1 };
+    tasks[r.id] = { ...meta, id: r.id, source: r.source, title: r.title, status: r.status, url: r.url, closed: r.closed === 1, tone: toneOf(r.status) };
   }
 
   const byLane = new Map<string, string[]>(lanes.map((l) => [l.key, []]));

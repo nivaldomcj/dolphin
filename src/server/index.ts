@@ -3,6 +3,7 @@ import { readBoard } from "../core/board";
 import { handleMcp } from "./mcp";
 import { refresh } from "../core/refresh";
 import { makeGuard } from "./guard";
+import { backupDaily } from "../core/backup";
 
 const guard = makeGuard(() => server.port ?? 0);
 
@@ -22,3 +23,5 @@ const server = Bun.serve({
 
 // Browsers send every *.localhost name to this machine. YouTube refuses some embeds on a bare-IP origin (the 🐬 easter egg).
 console.log(`dolphin on http://dolphin.localhost:${server.port}/`);
+
+void backupDaily();

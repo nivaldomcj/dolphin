@@ -1,3 +1,4 @@
+import { config } from "../config";
 import type { Fact } from "./types";
 
 const API = "https://api.linear.app/graphql";
@@ -25,9 +26,6 @@ async function apiKey(): Promise<string> {
   }
   return key;
 }
-
-/** Base of a Linear issue link, for tasks whose snapshot has no url. A refresh replaces it with Linear's own url. */
-export const LINEAR_ISSUE_URL = "https://linear.app/acme/issue/";
 
 interface GqlError {
   message: string;
@@ -113,9 +111,11 @@ export interface LinearResult {
 
 /**
  * Fetches the current state of every known Linear task, plus the open issues assigned to the key's owner.
- * Known ids are read in batches of 50 aliased `issue` lookups, so closed tasks come back too.
+ * Known ids are read in batches of 50 aliased `issue` lookups, so closed tasks come back too. With `linear: false`
+ * in the config it returns nothing.
  */
 export async function fetchLinear(knownIds: string[], signal?: AbortSignal): Promise<LinearResult> {
+  if (config.linear === false) return { facts: [], missing: [] };
   const key = await apiKey();
   const facts = new Map<string, Fact>();
   const missing: string[] = [];
