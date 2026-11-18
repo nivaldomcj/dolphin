@@ -1,0 +1,4 @@
+#!/bin/sh
+# Branches made before the scan existed have no script to run.
+[ -f src/scripts/check-private.ts ] || exit 0
+exec bun src/scripts/check-private.ts --staged

@@ -1,3 +1,5 @@
+import type { Tone } from "./define-config";
+
 /** Where a task's facts come from. A refresh overwrites facts; it never touches the arrangement. */
 export type Source = "linear" | "github";
 
@@ -20,6 +22,8 @@ export interface Task extends TaskMeta {
   status: string;
   url: string;
   closed: boolean;
+  /** Card fill, from the status and the config's `tones`. */
+  tone: Tone;
 }
 
 export interface Lane {

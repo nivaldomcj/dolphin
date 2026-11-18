@@ -1,15 +1,11 @@
+import { config } from "../config";
+import type { GithubProject } from "../define-config";
 import type { Fact } from "./types";
 
-/** The UNI board (lane X). Change these when the side project moves. */
-export const PROJECT = { owner: "example-org", number: 1, login: "nivaldomcj", repo: "example-org/tracker", prefix: "TRK" };
-
-/** Board columns that still need work. */
-const OPEN = new Set(["Backlog", "Todo", "Doing", "Stuck", "Review"]);
-
 /** Only the fields a card needs. `gh --paginate` advances the cursor only when the variable is named `$endCursor`. */
-const QUERY = `query($endCursor: String) {
-  organization(login: "${PROJECT.owner}") {
-    projectV2(number: ${PROJECT.number}) {
+const query = (p: GithubProject) => `query($endCursor: String) {
+  organization(login: ${JSON.stringify(p.owner)}) {
+    projectV2(number: ${p.number}) {
       items(first: 100, after: $endCursor) {
         pageInfo { hasNextPage endCursor }
         nodes {
@@ -22,18 +18,24 @@ const QUERY = `query($endCursor: String) {
 }`;
 
 /** One JSON line per issue of the repo assigned to the user. */
-const JQ = `.data.organization.projectV2.items.nodes[]
-  | select(.content.repository.nameWithOwner == "${PROJECT.repo}")
-  | select([.content.assignees.nodes[].login] | index("${PROJECT.login}"))
+const jq = (p: GithubProject) => `.data.organization.projectV2.items.nodes[]
+  | select(.content.repository.nameWithOwner == ${JSON.stringify(p.repo)})
+  | select([.content.assignees.nodes[].login] | index(${JSON.stringify(p.login)}))
   | {number: .content.number, title: .content.title, url: .content.url, status: (.status.name // "Backlog")}
   | @json`;
 
 interface Item { number: number; title: string; url: string; status: string }
 
-/** Lists the project's issues assigned to the user, through the `gh` CLI and its existing login. Takes about 9 s. */
+/**
+ * Lists the configured project's issues assigned to the user, through the `gh` CLI and its existing login. Takes
+ * about 9 s. Without a `github` block in the config it returns nothing.
+ */
 export async function fetchGithub(signal?: AbortSignal): Promise<Fact[]> {
+  const project = config.github;
+  if (!project) return [];
+  const open = new Set(project.open);
   // An abort (the refresh deadline) kills the gh process.
-  const gh = Bun.spawn(["gh", "api", "graphql", "--paginate", "-f", `query=${QUERY}`, "--jq", JQ], { stdout: "pipe", stderr: "pipe", signal });
+  const gh = Bun.spawn(["gh", "api", "graphql", "--paginate", "-f", `query=${query(project)}`, "--jq", jq(project)], { stdout: "pipe", stderr: "pipe", signal });
   const [stdout, stderr, exitCode] = await Promise.all([new Response(gh.stdout).text(), new Response(gh.stderr).text(), gh.exited]);
   signal?.throwIfAborted();
   if (exitCode !== 0) throw new Error(`gh api graphql failed: ${stderr.trim()}`);
@@ -43,11 +45,11 @@ export async function fetchGithub(signal?: AbortSignal): Promise<Fact[]> {
     .filter(Boolean)
     .map((line) => JSON.parse(line) as Item)
     .map((i) => ({
-      id: `${PROJECT.prefix}-${i.number}`,
+      id: `${project.prefix}-${i.number}`,
       source: "github",
       title: i.title,
       status: i.status,
       url: i.url,
-      closed: !OPEN.has(i.status),
+      closed: !open.has(i.status),
     }));
 }

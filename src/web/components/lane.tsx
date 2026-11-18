@@ -1,5 +1,5 @@
 import type { Lane as LaneData, Task } from "../../types";
-import { statusFill } from "../status";
+import { toneFill } from "../status";
 
 export type Mark = "current" | "hit" | "dim" | "rel-up" | "rel-down" | undefined;
 
@@ -21,7 +21,7 @@ function Card({ task, pos, mark, onFocus, onMove, onBlur }: CardProps) {
       href={task.url}
       target="_blank"
       rel="noopener"
-      style={{ background: statusFill(task.status) }}
+      style={{ background: toneFill(task.tone) }}
       onMouseEnter={(e) => onFocus(task.id, e)}
       onMouseMove={onMove}
       onMouseLeave={onBlur}
@@ -51,13 +51,13 @@ export function Lane({ lane, tasks, markOf, collapsed, onToggle, hideClosed, ...
       <button type="button" class="lane-head" aria-expanded={!collapsed} onClick={onToggle}>
         {collapsed ? (
           <span>
-            ▸ Lane {lane.key} <small>· {count} tasks</small>
+            ▸ Lane {lane.key} <small>· {count} {count === 1 ? "task" : "tasks"}</small>
           </span>
         ) : (
           <>
             <span>▾ Lane {lane.key}</span>
             <small class="sensitive">{lane.name}</small>
-            <small>{count} tasks</small>
+            <small>{count} {count === 1 ? "task" : "tasks"}</small>
           </>
         )}
       </button>

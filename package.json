@@ -9,6 +9,11 @@
     "dev": "bun --hot src/server/index.ts",
     "start": "NODE_ENV=production bun src/server/index.ts",
     "import": "bun src/scripts/import.ts",
+    "seed:demo": "DOLPHIN_DB=demo.db DOLPHIN_DEMO=1 DOLPHIN_CONFIG=dolphin.config.example.ts bun src/scripts/seed-demo.ts",
+    "demo": "DOLPHIN_DB=demo.db DOLPHIN_DEMO=1 DOLPHIN_CONFIG=dolphin.config.example.ts PORT=4750 bun src/server/index.ts",
+    "backup": "bun src/scripts/backup.ts",
+    "check:private": "bun src/scripts/check-private.ts",
+    "prepare": "bun src/scripts/install-hooks.ts",
     "typecheck": "bun check",
     "test": "bun test"
   },

@@ -1,0 +1,3 @@
+#!/bin/sh
+[ -f src/scripts/check-private.ts ] || exit 0
+exec bun src/scripts/check-private.ts --message "$1"

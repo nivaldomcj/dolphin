@@ -7,6 +7,7 @@ export interface DB {
   task: TaskTable;
   placement: PlacementTable;
   edge: EdgeTable;
+  setting: SettingTable;
 }
 
 export interface LaneTable {
@@ -41,4 +42,10 @@ export interface EdgeTable {
   a: string;
   /** The blocked task. */
   b: string;
+}
+
+export interface SettingTable {
+  key: string;
+  /** JSON. */
+  value: string;
 }

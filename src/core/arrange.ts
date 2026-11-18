@@ -1,7 +1,7 @@
 import { type Kysely, sql } from "kysely";
 import { db } from "../db";
 import type { DB } from "../db/schema";
-import { RELEASE_LANE } from "./rules";
+import { pinMatches, readRules } from "./rules";
 import type { TaskMeta } from "../types";
 
 /** Every write returns what it did, plus the rule warnings for the whole board after the write. */
@@ -56,10 +56,10 @@ export async function checkRules(): Promise<string[]> {
   const at = new Map(rows.map((r) => [r.task_id, r]));
   const warnings: string[] = [];
 
+  const { pins } = await readRules();
   for (const r of rows) {
-    if (r.kind === "release" && r.app?.includes("billing") && r.lane_key !== RELEASE_LANE) {
-      warnings.push(`${r.task_id} is a release in lane ${r.lane_key}, not lane ${RELEASE_LANE}.`);
-    }
+    const pin = pins.find((p) => pinMatches(p, r.kind, r.app));
+    if (pin && r.lane_key !== pin.lane) warnings.push(`${r.task_id} is a ${pin.label} in lane ${r.lane_key}, not lane ${pin.lane}.`);
   }
 
   for (const { a, b } of await db.selectFrom("edge").select(["a", "b"]).execute()) {

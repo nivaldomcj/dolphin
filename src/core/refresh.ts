@@ -1,4 +1,5 @@
 import { db } from "../db";
+import { backupDaily } from "./backup";
 import { fetchGithub } from "../sources/github";
 import { fetchLinear, type LinearResult } from "../sources/linear";
 import type { Fact } from "../sources/types";
@@ -102,8 +103,17 @@ export function createRefresh(sources: Sources, deadlineMs = DEADLINE_MS): () =>
   };
 }
 
-/** Pulls task facts from Linear and GitHub and writes them. Lanes, positions and edges are never touched. */
-export const refresh = createRefresh({ fetchLinear, fetchGithub });
+const pull = createRefresh({ fetchLinear, fetchGithub });
+
+/**
+ * Pulls task facts from Linear and GitHub and writes them. Lanes, positions and edges are never touched. Writes the
+ * day's backup afterwards, when it is not there yet.
+ */
+export async function refresh(): Promise<RefreshSummary> {
+  const summary = await pull();
+  void backupDaily();
+  return summary;
+}
 
 async function run(sources: Sources, deadlineMs: number): Promise<RefreshSummary> {
   const linearIds = (await db.selectFrom("task").select("id").where("source", "=", "linear").execute()).map((r) => r.id);

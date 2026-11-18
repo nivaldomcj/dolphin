@@ -2,13 +2,15 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { addEdge, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask } from "./arrange";
 import { readBoard } from "./board";
 import { db } from "../db";
+import { readRules, writeRules } from "./rules";
 
 const lane = async (key: string) => (await readBoard()).lanes.find((l) => l.key === key)?.ids ?? [];
 
 beforeEach(async () => {
   for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
+  await writeRules({ pins: [{ lane: "A", kind: "release", app: "billing", label: "billing release" }] });
   const task = (id: string, meta = {}) => ({ id, source: "linear" as const, title: id, status: "Todo", url: "", meta: JSON.stringify(meta) });
-  await db.insertInto("task").values([task("T1"), task("T2"), task("T3"), task("T4"), task("RUN", { kind: "release", app: "billing" }), task("NEW")]).execute();
+  await db.insertInto("task").values([task("T1"), task("T2"), task("T3"), task("T4"), task("RUN", { kind: "release", app: "Billing" }), task("NEW")]).execute();
   await db.insertInto("lane").values([{ key: "A", name: "a", bg: "", head: "", ord: 0 }, { key: "B", name: "b", bg: "", head: "", ord: 1 }]).execute();
   const place = (key: string, ids: string[]) => ids.map((task_id, pos) => ({ task_id, lane_key: key, pos }));
   await db.insertInto("placement").values([...place("A", ["RUN", "T1", "T2"]), ...place("B", ["T3", "T4"])]).execute();
@@ -32,8 +34,13 @@ describe("placeTask", () => {
     expect(await lane("N")).toEqual([]);
   });
 
-  test("warns when a release leaves lane A", async () => {
-    expect((await placeTask("RUN", "B")).warnings).toEqual(["RUN is a release in lane B, not lane A."]);
+  test("warns when a pinned task leaves its lane", async () => {
+    expect((await placeTask("RUN", "B")).warnings).toEqual(["RUN is a billing release in lane B, not lane A."]);
+  });
+
+  test("a pin matches on kind and on app, any case", async () => {
+    await writeRules({ pins: [{ lane: "A", kind: "other", label: "x" }, { lane: "A", app: "BILL", label: "billing task" }] });
+    expect((await placeTask("RUN", "B")).warnings).toEqual(["RUN is a billing task in lane B, not lane A."]);
   });
 
   test("rejects an unknown lane", async () => {
@@ -104,5 +111,14 @@ describe("parallel calls", () => {
 
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
     expect((await readBoard()).edges).toHaveLength(1);
+  });
+});
+
+describe("rules", () => {
+  test("writes only the parts given", async () => {
+    await writeRules({ text: "- one rule" });
+    expect(await readRules()).toEqual({ text: "- one rule", pins: [{ lane: "A", kind: "release", app: "billing", label: "billing release" }] });
+    await writeRules({ pins: [] });
+    expect(await readRules()).toEqual({ text: "- one rule", pins: [] });
   });
 });

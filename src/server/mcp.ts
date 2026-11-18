@@ -4,7 +4,7 @@ import { z } from "zod";
 import { addEdge, checkRules, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask, type ArrangeResult } from "../core/arrange";
 import { readBoard } from "../core/board";
 import { refresh } from "../core/refresh";
-import { RULES } from "../core/rules";
+import { readRules, writeRules } from "../core/rules";
 
 type ToolReply = { content: { type: "text"; text: string }[]; isError?: boolean };
 
@@ -19,16 +19,43 @@ async function write(fn: () => Promise<ArrangeResult>): Promise<ToolReply> {
   }
 }
 
-const taskId = z.string().describe("Task id, e.g. ENG-123 or TRK-42");
+const taskId = z.string().describe("Task id, e.g. ENG-123");
+
+const pin = z
+  .object({
+    lane: z.string().describe("The lane matching tasks belong in"),
+    kind: z.string().optional().describe("Match tasks whose meta.kind is exactly this"),
+    app: z.string().optional().describe("Match tasks whose meta.app contains this, any case"),
+    label: z.string().min(1).describe('How a warning names the task, e.g. "release run"'),
+  })
+  .refine((p) => p.kind !== undefined || p.app !== undefined, "A pin needs `kind`, `app` or both.");
 const laneKey = z.string().describe("Lane key, e.g. A");
 
 function buildServer(): McpServer {
-  const mcp = new McpServer({ name: "dolphin", version: "0.2.0" });
+  const mcp = new McpServer({ name: "dolphin", version: "0.3.0" });
 
   mcp.registerTool(
     "get_board",
     { description: "Read the lane rules, every lane with its tasks in order, the dependency edges, and the current rule warnings. Call it before arranging." },
-    async () => reply({ rules: RULES, warnings: await checkRules(), ...(await readBoard()) }),
+    async () => reply({ rules: await readRules(), warnings: await checkRules(), ...(await readBoard()) }),
+  );
+
+  mcp.registerTool(
+    "get_rules",
+    { description: "Read the lane rules: the free text Claude follows when arranging, and the pins the warnings check." },
+    async () => reply(await readRules()),
+  );
+
+  mcp.registerTool(
+    "set_rules",
+    {
+      description: "Replace the rules text, the pins, or both. A part left out stays as it is. Returns the rules and the warnings they now give.",
+      inputSchema: { text: z.string().optional(), pins: z.array(pin).optional() },
+    },
+    async ({ text, pins }) => {
+      const rules = await writeRules({ text, pins });
+      return reply({ ...rules, warnings: await checkRules() });
+    },
   );
 
   mcp.registerTool(
