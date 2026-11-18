@@ -1,7 +1,7 @@
-import index from "./web/index.html";
-import { readBoard } from "./board";
+import index from "../web/index.html";
+import { readBoard } from "../core/board";
 import { handleMcp } from "./mcp";
-import { refresh } from "./refresh";
+import { refresh } from "../core/refresh";
 
 const server = Bun.serve({
   hostname: "127.0.0.1",

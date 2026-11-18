@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { addEdge, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask } from "./arrange";
 import { readBoard } from "./board";
-import { db } from "./db";
+import { db } from "../db";
 
 const lane = async (key: string) => (await readBoard()).lanes.find((l) => l.key === key)?.ids ?? [];
 

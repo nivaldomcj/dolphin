@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
-import type { Board, RefreshSummary } from "../types";
+import type { Board, RefreshSummary } from "../../types";
 
 /** A successful refresh hides itself after this long. A failure stays until closed. */
 const TOAST_MS = 6000;

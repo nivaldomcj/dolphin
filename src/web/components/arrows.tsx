@@ -1,6 +1,6 @@
 import type { RefObject } from "preact";
 import { useLayoutEffect, useState } from "preact/hooks";
-import type { Board } from "../types";
+import type { Board } from "../../types";
 
 interface Box { l: number; r: number; t: number; b: number; cx: number; cy: number }
 interface Path { key: string; d: string; kind: "seq" | "cross" | "inlane" }

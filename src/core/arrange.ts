@@ -1,8 +1,8 @@
 import { type Kysely, sql } from "kysely";
-import { db } from "./db";
-import type { DB } from "./db/schema";
+import { db } from "../db";
+import type { DB } from "../db/schema";
 import { RELEASE_LANE } from "./rules";
-import type { TaskMeta } from "./types";
+import type { TaskMeta } from "../types";
 
 /** Every write returns what it did, plus the rule warnings for the whole board after the write. */
 export interface ArrangeResult {

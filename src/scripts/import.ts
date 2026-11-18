@@ -1,9 +1,10 @@
 /**
  * One-time import of a board `data.json` snapshot into SQLite.
- * Usage: bun run import <path/to/data.json>. It replaces every lane, task, placement and edge.
+ * Usage: bun run import <path/to/data.json> [--force]. It replaces every lane, task, placement and edge,
+ * so it refuses to run on a board that already has lanes unless --force is given.
  */
-import { db } from "./db";
-import type { TaskMeta } from "./types";
+import { db } from "../db";
+import type { TaskMeta } from "../types";
 
 interface Snapshot {
   lanes: { key: string; name: string; ids: string[] }[];
@@ -21,11 +22,21 @@ const COLORS: Record<string, [bg: string, head: string]> = {
 };
 const FALLBACK: [string, string] = ["#f3f3f3", "#dcdcdc"];
 
-const path = Bun.argv[2];
+const args = Bun.argv.slice(2);
+const force = args.includes("--force");
+const path = args.find((a) => !a.startsWith("--"));
 if (!path) {
-  console.error("Usage: bun run import <path/to/data.json>");
+  console.error("Usage: bun run import <path/to/data.json> [--force]");
   process.exit(1);
 }
+
+const existing = await db.selectFrom("lane").select((eb) => eb.fn.countAll<number>().as("n")).executeTakeFirstOrThrow();
+if (existing.n > 0 && !force) {
+  console.error(`The board already has ${existing.n} lanes. The import would replace them and every placement and edge.`);
+  console.error("Run again with --force to do it anyway.");
+  process.exit(1);
+}
+
 const snap = (await Bun.file(path).json()) as Snapshot;
 
 await db.transaction().execute(async (trx) => {

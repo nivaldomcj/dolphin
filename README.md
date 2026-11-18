@@ -20,8 +20,8 @@ Open the page at http://dolphin.localhost:4747. Browsers send every `*.localhost
 it needs no `/etc/hosts` entry. Avoid `127.0.0.1`: YouTube refuses some embeds on a bare-IP address. The server
 still listens on `127.0.0.1` only.
 
-`bun run import path/to/data.json` loads a board snapshot once. It replaces the whole board, so do not run it on a
-board you have arranged since.
+`bun run import path/to/data.json` loads a board snapshot. It replaces the whole board, so on a board that already
+has lanes it stops unless you add `--force`.
 
 ## Stack and decisions
 
@@ -117,13 +117,17 @@ bun test   # runs on an in-memory database (test-setup.ts), never on dolphin.db
 
 ## Layout
 
-- `src/server.ts`: `Bun.serve` routes (`/`, `/api/board`, `POST /api/refresh`, `/mcp`).
-- `src/refresh.ts` and `src/sources/`: the refresh, with one fetcher per tracker.
+- `src/server/`: `index.ts` (the `Bun.serve` routes: `/`, `/api/board`, `POST /api/refresh`, `/mcp`) and `mcp.ts` (the MCP tools).
+- `src/core/`: the board logic, with no HTTP. `board.ts` reads the board, `arrange.ts` holds the writes behind the MCP
+  tools and the rule checks, `refresh.ts` applies tracker facts, `rules.ts` holds the lane rules. Tests sit next to them.
+- `src/sources/`: one fetcher per tracker (Linear, GitHub).
 - `src/db/`: the Kysely setup, the `bun:sqlite` adapter, the row types and `migrations/`.
-- `src/board.ts`: the board query.
-- `src/mcp.ts`: MCP tools. `src/arrange.ts`: the writes behind them and the rule checks. `src/rules.ts`: the lane rules.
-- `src/import.ts`: one-time import of a `data.json` snapshot.
-- `src/web/`: the Preact page. `app.css` is the CSS entry; `board.css` holds the board styles.
+- `src/scripts/import.ts`: load a `data.json` snapshot (`bun run import <file>`). It refuses to replace a board that
+  has lanes unless you add `--force`.
+- `src/web/`: the Preact page. `app.tsx` is the layout; `hooks/` holds the state (board, search, collapsed lanes,
+  display settings) and `components/` the parts of the page. `app.css` is the CSS entry; `board.css` holds the
+  board styles.
+- `src/types.ts`: the types shared by the server and the page.
 
 Task facts (title, status) come from the trackers. Lanes, positions and dependencies are set by hand or by Claude.
 `dolphin.db` and `data*.json` hold work data and are git-ignored.

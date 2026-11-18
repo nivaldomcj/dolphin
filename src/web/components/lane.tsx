@@ -1,5 +1,5 @@
-import type { Lane as LaneData, Task } from "../types";
-import { statusFill } from "./status";
+import type { Lane as LaneData, Task } from "../../types";
+import { statusFill } from "../status";
 
 export type Mark = "current" | "hit" | "dim" | "rel-up" | "rel-down" | undefined;
 

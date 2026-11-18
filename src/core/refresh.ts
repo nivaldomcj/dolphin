@@ -1,8 +1,8 @@
-import { db } from "./db";
-import { fetchGithub } from "./sources/github";
-import { fetchLinear } from "./sources/linear";
-import type { Fact } from "./sources/types";
-import type { RefreshSummary, Source } from "./types";
+import { db } from "../db";
+import { fetchGithub } from "../sources/github";
+import { fetchLinear } from "../sources/linear";
+import type { Fact } from "../sources/types";
+import type { RefreshSummary, Source } from "../types";
 
 interface Known {
   id: string;

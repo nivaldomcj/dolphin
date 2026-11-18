@@ -1,5 +1,5 @@
-import { db } from "./db";
-import type { Board, Lane, Task, TaskMeta } from "./types";
+import { db } from "../db";
+import type { Board, Lane, Task, TaskMeta } from "../types";
 
 /** Lane shown for tasks a refresh found but nobody placed yet. Not stored. */
 const UNPLACED: Omit<Lane, "ids"> = { key: "N", name: "New, not placed yet", bg: "#eeeeee", head: "#d6d6d6" };

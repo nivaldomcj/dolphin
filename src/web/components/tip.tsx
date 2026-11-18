@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
-import type { Task } from "../types";
+import type { Task } from "../../types";
 
 interface Props {
   task: Task;
