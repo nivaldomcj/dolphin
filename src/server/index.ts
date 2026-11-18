@@ -1,7 +1,10 @@
-import index from "./web/index.html";
-import { readBoard } from "./board";
+import index from "../web/index.html";
+import { readBoard } from "../core/board";
 import { handleMcp } from "./mcp";
-import { refresh } from "./refresh";
+import { refresh } from "../core/refresh";
+import { makeGuard } from "./guard";
+
+const guard = makeGuard(() => server.port ?? 0);
 
 const server = Bun.serve({
   hostname: "127.0.0.1",
@@ -11,9 +14,9 @@ const server = Bun.serve({
   idleTimeout: 60,
   routes: {
     "/": index,
-    "/api/board": async () => Response.json(await readBoard()),
-    "/api/refresh": { POST: async () => Response.json({ summary: await refresh(), board: await readBoard() }) },
-    "/mcp": handleMcp,
+    "/api/board": guard(async () => Response.json(await readBoard())),
+    "/api/refresh": { POST: guard(async () => Response.json({ summary: await refresh(), board: await readBoard() })) },
+    "/mcp": guard(handleMcp),
   },
 });
 

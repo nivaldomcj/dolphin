@@ -43,7 +43,7 @@ export function Search({ open, query, current, total, onToggle, onOpen, onClose,
           <input
             ref={input}
             type="search"
-            class="grow"
+            class="grow sensitive"
             placeholder="Search ID, title or app"
             value={query}
             onInput={(e) => onQuery(e.currentTarget.value)}

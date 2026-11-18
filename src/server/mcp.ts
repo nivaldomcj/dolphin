@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { z } from "zod";
-import { addEdge, checkRules, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask, type ArrangeResult } from "./arrange";
-import { readBoard } from "./board";
-import { refresh } from "./refresh";
-import { RULES } from "./rules";
+import { addEdge, checkRules, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask, type ArrangeResult } from "../core/arrange";
+import { readBoard } from "../core/board";
+import { refresh } from "../core/refresh";
+import { RULES } from "../core/rules";
 
 type ToolReply = { content: { type: "text"; text: string }[]; isError?: boolean };
 

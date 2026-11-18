@@ -1,7 +1,7 @@
 import type { Fact } from "./types";
 
 /** The UNI board (lane X). Change these when the side project moves. */
-const PROJECT = { owner: "example-org", number: 1, login: "nivaldomcj", repo: "example-org/tracker", prefix: "TRK" };
+export const PROJECT = { owner: "example-org", number: 1, login: "nivaldomcj", repo: "example-org/tracker", prefix: "TRK" };
 
 /** Board columns that still need work. */
 const OPEN = new Set(["Backlog", "Todo", "Doing", "Stuck", "Review"]);
@@ -31,12 +31,14 @@ const JQ = `.data.organization.projectV2.items.nodes[]
 interface Item { number: number; title: string; url: string; status: string }
 
 /** Lists the project's issues assigned to the user, through the `gh` CLI and its existing login. Takes about 9 s. */
-export async function fetchGithub(): Promise<Fact[]> {
-  const out = await Bun.$`gh api graphql --paginate -f query=${QUERY} --jq ${JQ}`.quiet().nothrow();
-  if (out.exitCode !== 0) throw new Error(`gh api graphql failed: ${out.stderr.toString().trim()}`);
+export async function fetchGithub(signal?: AbortSignal): Promise<Fact[]> {
+  // An abort (the refresh deadline) kills the gh process.
+  const gh = Bun.spawn(["gh", "api", "graphql", "--paginate", "-f", `query=${QUERY}`, "--jq", JQ], { stdout: "pipe", stderr: "pipe", signal });
+  const [stdout, stderr, exitCode] = await Promise.all([new Response(gh.stdout).text(), new Response(gh.stderr).text(), gh.exited]);
+  signal?.throwIfAborted();
+  if (exitCode !== 0) throw new Error(`gh api graphql failed: ${stderr.trim()}`);
 
-  return out.stdout
-    .toString()
+  return stdout
     .split("\n")
     .filter(Boolean)
     .map((line) => JSON.parse(line) as Item)

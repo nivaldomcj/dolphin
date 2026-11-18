@@ -1,3 +1,4 @@
+import { THEMES, type Theme } from "../theme";
 interface Option<T extends string> {
   value: T;
   label: string;
@@ -25,7 +26,7 @@ function Segmented<T extends string>({ value, options, onChange }: { value: T; o
 }
 
 
-function Switch({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+function Switch({ label, value, onChange, on = "🟢", off = "🔴" }: { label: string; value: boolean; onChange: (v: boolean) => void; on?: string; off?: string }) {
   return (
     <>
       <span>{label}</span>
@@ -33,15 +34,14 @@ function Switch({ label, value, onChange }: { label: string; value: boolean; onC
         value={value ? "on" : "off"}
         onChange={(v) => onChange(v === "on")}
         options={[
-          { value: "on", label: "🟢", title: `${label}: on` },
-          { value: "off", label: "🔴", title: `${label}: off` },
+          { value: "on", label: on, title: `${label}: on` },
+          { value: "off", label: off, title: `${label}: off` },
         ]}
       />
     </>
   );
 }
 
-export type Theme = "system" | "light" | "dark";
 
 interface Props {
   theme: Theme;
@@ -53,6 +53,8 @@ interface Props {
   inLane: boolean;
   onInLane: (v: boolean) => void;
   legend: boolean;
+  completed: boolean;
+  onCompleted: (v: boolean) => void;
   onLegend: (v: boolean) => void;
   privacy: boolean;
   onPrivacy: (v: boolean) => void;
@@ -68,25 +70,14 @@ export function Settings(p: Props) {
         <Segmented
           value={p.theme}
           onChange={p.onTheme}
-          options={[
-            { value: "system", label: "💻", title: "Theme: system" },
-            { value: "light", label: "☀️", title: "Theme: light" },
-            { value: "dark", label: "🌙", title: "Theme: dark" },
-          ]}
+          options={[...THEMES]}
         />
         <Switch label="titles" value={p.titles} onChange={p.onTitles} />
         <Switch label="positions" value={p.positions} onChange={p.onPositions} />
         <Switch label="in-lane blockers" value={p.inLane} onChange={p.onInLane} />
+        <Switch label="completed" value={p.completed} onChange={p.onCompleted} />
         <Switch label="legend" value={p.legend} onChange={p.onLegend} />
-        <span>privacy</span>
-        <Segmented
-          value={p.privacy ? "on" : "off"}
-          onChange={(v) => p.onPrivacy(v === "on")}
-          options={[
-            { value: "on", label: "🙈", title: "privacy: on" },
-            { value: "off", label: "🙉", title: "privacy: off" },
-          ]}
-        />
+        <Switch label="privacy" value={p.privacy} onChange={p.onPrivacy} on="🙈" off="🙉" />
       </div>
     </div>
   );

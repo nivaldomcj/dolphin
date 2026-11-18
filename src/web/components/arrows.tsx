@@ -1,6 +1,6 @@
 import type { RefObject } from "preact";
 import { useLayoutEffect, useState } from "preact/hooks";
-import type { Board } from "../types";
+import type { Board } from "../../types";
 
 interface Box { l: number; r: number; t: number; b: number; cx: number; cy: number }
 interface Path { key: string; d: string; kind: "seq" | "cross" | "inlane" }
@@ -17,9 +17,11 @@ function measure(root: HTMLElement, id: string): Box | undefined {
 function layout(root: HTMLElement, board: Board, laneOf: Map<string, string>, showInLane: boolean): Path[] {
   const paths: Path[] = [];
   for (const lane of board.lanes) {
-    for (let i = 0; i + 1 < lane.ids.length; i++) {
-      const a = measure(root, lane.ids[i]!), b = measure(root, lane.ids[i + 1]!);
-      if (a && b) paths.push({ key: `s-${lane.ids[i]}`, kind: "seq", d: `M${a.r + 2},${a.cy} L${b.l - 3},${b.cy}` });
+    // Only rendered cards: a hidden (completed) card or a collapsed lane leaves no gap in the sequence line.
+    const shown = lane.ids.map((id) => [id, measure(root, id)] as const).filter((e): e is readonly [string, Box] => e[1] !== undefined);
+    for (let i = 0; i + 1 < shown.length; i++) {
+      const [id, a] = shown[i]!, [, b] = shown[i + 1]!;
+      paths.push({ key: `s-${id}`, kind: "seq", d: `M${a.r + 2},${a.cy} L${b.l - 3},${b.cy}` });
     }
   }
   for (const [x, y] of board.edges) {
@@ -53,15 +55,11 @@ interface Props {
 /** SVG overlay: grey sequence lines inside a lane, blue curves for dependencies. */
 export function Arrows({ root, board, laneOf, showInLane, layoutKey }: Props) {
   const [paths, setPaths] = useState<Path[]>([]);
-  const [size, setSize] = useState({ w: 0, h: 0 });
 
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
-    const redraw = () => {
-      setSize({ w: el.scrollWidth, h: el.scrollHeight });
-      setPaths(layout(el, board, laneOf, showInLane));
-    };
+    const redraw = () => setPaths(layout(el, board, laneOf, showInLane));
     redraw();
     document.fonts?.ready.then(redraw);
     // Any board resize moves the cards: the window, the legend bar taking height, card widths changing.
@@ -71,7 +69,8 @@ export function Arrows({ root, board, laneOf, showInLane, layoutKey }: Props) {
   }, [board, laneOf, showInLane, layoutKey]);
 
   return (
-    <svg class="arrows" width={size.w} height={size.h}>
+    // Sized by CSS (inset: 0 on the board). Measuring the board would include this overlay and it could never shrink.
+    <svg class="arrows">
       <defs>
         <marker id="mS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
           <path d="M0,0L10,5L0,10z" style={{ fill: "var(--seq)" }} />

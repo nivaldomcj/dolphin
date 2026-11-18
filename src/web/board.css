@@ -86,9 +86,9 @@ body { font-size: 14px; line-height: 1.4; background: var(--bg); color: var(--fg
 .notitle .card .ttl { display: none; }
 .nopos .card .pos { display: none; }
 
-svg.arrows { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: visible; }
+svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
 
-.tip { position: fixed; z-index: 10; max-width: 360px; background: #1d1d24; color: #fff; padding: 10px 12px; border-radius: 6px;
+.tip { position: fixed; z-index: 10; max-width: min(360px, calc(100vw - 16px)); background: #1d1d24; color: #fff; padding: 10px 12px; border-radius: 6px;
        font-size: 12px; line-height: 1.45; pointer-events: none; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
 .tip b { font-size: 13px; }
 .tip .k { color: #b8b8c8; }
@@ -102,9 +102,15 @@ svg.arrows { position: absolute; inset: 0; z-index: 1; pointer-events: none; ove
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --redact: rgba(255, 255, 255, 0.18); } }
 :root[data-theme="dark"] { --redact: rgba(255, 255, 255, 0.18); }
 body.private .sensitive {
+  /* Forced-colors mode would repaint transparent text and drop the bars, revealing it. */
+  forced-color-adjust: none;
   color: transparent;
   text-shadow: none;
   user-select: none;
   background: repeating-linear-gradient(to bottom, var(--redact) 0 calc(1lh - 0.4em), transparent calc(1lh - 0.4em) 1lh);
 }
 body.private .tip { display: none; }
+/* The search box hides its text but stays usable: keep the caret, the placeholder and selection. */
+body.private input.sensitive { caret-color: var(--fg); user-select: auto; }
+body.private input.sensitive::placeholder { color: var(--muted); }
+body.private .sensitive::selection { color: transparent; }

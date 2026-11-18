@@ -1,97 +1,50 @@
 import { render } from "preact";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-import type { Board } from "../types";
-import { Arrows } from "./arrows";
-import { Title } from "./easter-egg";
-import { Lane, type Mark } from "./lane";
-import { Legend } from "./legend";
-import { usePref, useStringPref } from "./prefs";
-import { RefreshButton } from "./refresh-button";
-import { Search } from "./search";
-import { Settings, type Theme } from "./settings";
-import { Tip } from "./tip";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { Arrows } from "./components/arrows";
+import { Title } from "./components/easter-egg";
+import { Lane, type Mark } from "./components/lane";
+import { Legend } from "./components/legend";
+import { RefreshButton } from "./components/refresh-button";
+import { Search } from "./components/search";
+import { Settings } from "./components/settings";
+import { Tip } from "./components/tip";
+import { useBoard } from "./hooks/use-board";
+import { useCollapsedLanes } from "./hooks/use-collapsed-lanes";
+import { useDisplay } from "./hooks/use-display";
+import { useSearch } from "./hooks/use-search";
 
 function App() {
-  const [board, setBoard] = useState<Board | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [titles, setTitles] = usePref("titles", true);
-  const [positions, setPositions] = usePref("positions", true);
-  const [inLane, setInLane] = usePref("inLane", false);
-  /** Collapsed lane keys, stored as "A,X". */
-  const [collapsedPref, setCollapsedPref] = useStringPref("collapsed", "");
-  const collapsed = useMemo(() => new Set(collapsedPref.split(",").filter(Boolean)), [collapsedPref]);
-  const setLane = (key: string, isCollapsed: boolean) => {
-    const next = new Set(collapsed);
-    if (isCollapsed) next.add(key);
-    else next.delete(key);
-    setCollapsedPref([...next].join(","));
-  };
-  const [legend, setLegend] = usePref("legend", false);
-  const [privacy, setPrivacy] = usePref("privacy", false);
-  const [theme, setTheme] = useStringPref("theme", "system");
-  const [query, setQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [hitIndex, setHitIndex] = useState(0);
+  const { board, setBoard, error, graph } = useBoard();
+  const display = useDisplay();
+  const lanes = useCollapsedLanes();
+  const search = useSearch(board, !display.completed);
   const [focus, setFocus] = useState<{ id: string; x: number; y: number } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  const { laneOf, up, down } = graph;
 
+  // Reveal the current match on a new search or an explicit step, not on a lane toggle, so collapsing a lane during
+  // a search sticks while Enter still brings the match back.
+  const lanesRef = useRef(lanes);
+  lanesRef.current = lanes;
   useEffect(() => {
-    if (theme === "system") delete document.documentElement.dataset.theme;
-    else document.documentElement.dataset.theme = theme;
-  }, [theme]);
-
-  useEffect(() => {
-    document.body.classList.toggle("private", privacy);
-  }, [privacy]);
-
-  useEffect(() => {
-    fetch("/api/board")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then(setBoard, (e: Error) => setError(e.message));
-  }, []);
-
-  const { laneOf, up, down } = useMemo(() => {
-    const laneOf = new Map<string, string>(), up = new Map<string, string[]>(), down = new Map<string, string[]>();
-    for (const lane of board?.lanes ?? []) for (const id of lane.ids) laneOf.set(id, lane.key);
-    for (const [a, b] of board?.edges ?? []) {
-      down.set(a, [...(down.get(a) ?? []), b]);
-      up.set(b, [...(up.get(b) ?? []), a]);
+    const id = search.current;
+    if (!id) return;
+    const scroll = () =>
+      boardRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    const key = laneOf.get(id);
+    if (key && lanesRef.current.collapsed.has(key)) {
+      lanesRef.current.setCollapsed(key, false);
+      const frame = requestAnimationFrame(scroll); // after the expanded lane renders its cards
+      return () => cancelAnimationFrame(frame); // the match changed first: do not scroll to the old one
     }
-    return { laneOf, up, down };
-  }, [board]);
-
-  const hits = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q || !board) return null;
-    const match = (s?: string | null) => (s ?? "").toLowerCase().includes(q);
-    return new Set(Object.values(board.tasks).filter((t) => match(t.id) || match(t.title) || match(t.short) || match(t.app)).map((t) => t.id));
-  }, [query, board]);
-
-  /** Matches in board order, so Enter walks lane by lane, left to right. */
-  const hitList = useMemo(() => (hits && board ? board.lanes.flatMap((l) => l.ids).filter((id) => hits.has(id)) : []), [hits, board]);
-
-  useEffect(() => setHitIndex(0), [hits]);
-
-  useEffect(() => {
-    const id = hitList[hitIndex];
-    const key = id && laneOf.get(id);
-    // A match in a collapsed lane would be invisible, so expand that lane first; this effect runs again after.
-    if (key && collapsed.has(key)) return setLane(key, false);
-    if (id) boardRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [hitList, hitIndex, collapsed]);
-
-  const openSearch = useCallback(() => setSearchOpen(true), []);
-  const closeSearch = () => {
-    setSearchOpen(false);
-    setQuery("");
-  };
-  const step = (delta: 1 | -1) => setHitIndex((i) => (hitList.length ? (i + delta + hitList.length) % hitList.length : 0));
+    scroll();
+  }, [search.current, search.seq]);
 
   const markOf = (id: string): Mark => {
-    if (hits && hitList[hitIndex] === id) return "current";
+    if (search.hits && search.current === id) return "current";
     if (focus && up.get(focus.id)?.includes(id)) return "rel-up";
     if (focus && down.get(focus.id)?.includes(id)) return "rel-down";
-    if (hits) return hits.has(id) ? "hit" : "dim";
+    if (search.hits) return search.hits.has(id) ? "hit" : "dim";
     return undefined;
   };
 
@@ -103,45 +56,33 @@ function App() {
         <Title />
         <RefreshButton onBoard={setBoard} />
         <Search
-          open={searchOpen}
-          query={query}
-          current={hitIndex}
-          total={hitList.length}
-          onToggle={() => (searchOpen ? closeSearch() : openSearch())}
-          onOpen={openSearch}
-          onClose={closeSearch}
-          onQuery={setQuery}
-          onStep={step}
+          open={search.open}
+          query={search.query}
+          current={search.index}
+          total={search.list.length}
+          onToggle={() => (search.open ? search.closeSearch() : search.openSearch())}
+          onOpen={search.openSearch}
+          onClose={search.closeSearch}
+          onQuery={search.setQuery}
+          onStep={search.step}
         />
-        <Settings
-          theme={theme as Theme}
-          onTheme={setTheme}
-          titles={titles}
-          onTitles={setTitles}
-          positions={positions}
-          onPositions={setPositions}
-          inLane={inLane}
-          onInLane={setInLane}
-          legend={legend}
-          onLegend={setLegend}
-          privacy={privacy}
-          onPrivacy={setPrivacy}
-        />
+        <Settings {...display} />
       </header>
-      <div class={`scroller${titles ? "" : " notitle"}${positions ? "" : " nopos"}`}>
+      <div class={`scroller${display.titles ? "" : " notitle"}${display.positions ? "" : " nopos"}`}>
         {error && <p class="empty">Could not load the board: {error}</p>}
         {board && board.lanes.length === 0 && <p class="empty">The board is empty. Run `bun run import &lt;data.json&gt;`.</p>}
         {board && (
           <div class="board" ref={boardRef}>
-            <Arrows root={boardRef} board={board} laneOf={laneOf} showInLane={inLane} layoutKey={`${titles}|${collapsedPref}`} />
+            <Arrows root={boardRef} board={board} laneOf={laneOf} showInLane={display.inLane} layoutKey={`${display.titles}|${display.completed}|${lanes.key}`} />
             {board.lanes.map((lane) => (
               <Lane
                 key={lane.key}
                 lane={lane}
                 tasks={board.tasks}
                 markOf={markOf}
-                collapsed={collapsed.has(lane.key)}
-                onToggle={() => setLane(lane.key, !collapsed.has(lane.key))}
+                collapsed={lanes.collapsed.has(lane.key)}
+                onToggle={() => lanes.toggle(lane.key)}
+                hideClosed={!display.completed}
                 onFocus={(id, e) => setFocus({ id, x: e.clientX, y: e.clientY })}
                 onMove={(e) => setFocus((f) => f && { ...f, x: e.clientX, y: e.clientY })}
                 onBlur={() => setFocus(null)}
@@ -150,7 +91,7 @@ function App() {
           </div>
         )}
       </div>
-      {legend && <Legend />}
+      {display.legend && <Legend />}
       {focus && focused && <Tip task={focused} x={focus.x} y={focus.y} waitsFor={up.get(focus.id) ?? []} blocks={down.get(focus.id) ?? []} />}
     </>
   );
