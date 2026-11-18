@@ -1,25 +1,14 @@
 import { render } from "preact";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { Board } from "../types";
 import { Arrows } from "./arrows";
 import { Lane, type Mark } from "./lane";
+import { Legend } from "./legend";
 import { usePref, useStringPref } from "./prefs";
 import { RefreshButton } from "./refresh-button";
+import { Search } from "./search";
+import { Settings, type Theme } from "./settings";
 import { Tip } from "./tip";
-
-function Legend() {
-  return (
-    <div class="legend">
-      <span><span class="sw" style={{ background: "var(--s-progress)" }} />In Progress</span>
-      <span><span class="sw" style={{ background: "var(--s-blocked)" }} />Blocked</span>
-      <span><span class="sw" style={{ background: "var(--s-todo)" }} />Todo</span>
-      <span><span class="sw" style={{ background: "var(--s-done)" }} />In Review / Done</span>
-      <span><span class="sw dash" />Umbrella</span>
-      <span><span class="ln" style={{ borderColor: "var(--seq)" }} />Next in lane</span>
-      <span><span class="ln" style={{ borderColor: "var(--blk)" }} />Blocker</span>
-    </div>
-  );
-}
 
 function App() {
   const [board, setBoard] = useState<Board | null>(null);
@@ -27,8 +16,11 @@ function App() {
   const [titles, setTitles] = usePref("titles", true);
   const [positions, setPositions] = usePref("positions", true);
   const [inLane, setInLane] = usePref("inLane", false);
+  const [legend, setLegend] = usePref("legend", false);
   const [theme, setTheme] = useStringPref("theme", "system");
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [hitIndex, setHitIndex] = useState(0);
   const [focus, setFocus] = useState<{ id: string; x: number; y: number } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
@@ -60,12 +52,25 @@ function App() {
     return new Set(Object.values(board.tasks).filter((t) => match(t.id) || match(t.title) || match(t.short) || match(t.app)).map((t) => t.id));
   }, [query, board]);
 
+  /** Matches in board order, so Enter walks lane by lane, left to right. */
+  const hitList = useMemo(() => (hits && board ? board.lanes.flatMap((l) => l.ids).filter((id) => hits.has(id)) : []), [hits, board]);
+
+  useEffect(() => setHitIndex(0), [hits]);
+
   useEffect(() => {
-    const first = hits && board?.lanes.flatMap((l) => l.ids).find((id) => hits.has(id));
-    if (first) boardRef.current?.querySelector(`[data-id="${CSS.escape(first)}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [hits]);
+    const id = hitList[hitIndex];
+    if (id) boardRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [hitList, hitIndex]);
+
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setQuery("");
+  };
+  const step = (delta: 1 | -1) => setHitIndex((i) => (hitList.length ? (i + delta + hitList.length) % hitList.length : 0));
 
   const markOf = (id: string): Mark => {
+    if (hits && hitList[hitIndex] === id) return "current";
     if (focus && up.get(focus.id)?.includes(id)) return "rel-up";
     if (focus && down.get(focus.id)?.includes(id)) return "rel-down";
     if (hits) return hits.has(id) ? "hit" : "dim";
@@ -76,22 +81,32 @@ function App() {
 
   return (
     <>
-      <header>
-        <h1>dolphin</h1>
-        <Legend />
-        <span class="hint">Hover: red ring = blockers, green ring = blocked tasks. Click opens the task.</span>
-        <div class="controls">
-          <RefreshButton onBoard={setBoard} />
-          <label><input type="checkbox" checked={titles} onChange={(e) => setTitles(e.currentTarget.checked)} /> Show titles</label>
-          <label><input type="checkbox" checked={positions} onChange={(e) => setPositions(e.currentTarget.checked)} /> Show positions</label>
-          <label><input type="checkbox" checked={inLane} onChange={(e) => setInLane(e.currentTarget.checked)} /> Show in-lane blockers</label>
-          <input type="search" placeholder="Search ID, title or app" value={query} onInput={(e) => setQuery(e.currentTarget.value)} />
-          <select class="theme" value={theme} onChange={(e) => setTheme(e.currentTarget.value)} aria-label="Theme">
-            <option value="light">☀️ Light</option>
-            <option value="dark">🌙 Dark</option>
-            <option value="system">🖥️ System</option>
-          </select>
-        </div>
+      <header class="sticky top-0 z-10 flex items-center gap-2 border-b border-base-300 bg-base-200 px-4 py-2">
+        <h1 class="mr-auto text-base font-bold">🐬 dolphin</h1>
+        <RefreshButton onBoard={setBoard} />
+        <Search
+          open={searchOpen}
+          query={query}
+          current={hitIndex}
+          total={hitList.length}
+          onToggle={() => (searchOpen ? closeSearch() : openSearch())}
+          onOpen={openSearch}
+          onClose={closeSearch}
+          onQuery={setQuery}
+          onStep={step}
+        />
+        <Settings
+          theme={theme as Theme}
+          onTheme={setTheme}
+          titles={titles}
+          onTitles={setTitles}
+          positions={positions}
+          onPositions={setPositions}
+          inLane={inLane}
+          onInLane={setInLane}
+          legend={legend}
+          onLegend={setLegend}
+        />
       </header>
       <div class={`scroller${titles ? "" : " notitle"}${positions ? "" : " nopos"}`}>
         {error && <p class="empty">Could not load the board: {error}</p>}
@@ -113,6 +128,7 @@ function App() {
           </div>
         )}
       </div>
+      {legend && <Legend />}
       {focus && focused && <Tip task={focused} x={focus.x} y={focus.y} waitsFor={up.get(focus.id) ?? []} blocks={down.get(focus.id) ?? []} />}
     </>
   );

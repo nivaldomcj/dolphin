@@ -63,6 +63,22 @@ To change the schema:
 
 Never edit a migration that already ran on your `dolphin.db`; write a new one.
 
+## Page
+
+The header has 3 buttons: 🔁 refreshes statuses, 🔍 opens the search box (also ⌘F; Enter and Shift+Enter step through
+matches, Esc clears), 🎛️ opens the settings (theme, titles, positions, in-lane blockers, legend). The legend shows as
+a bar at the bottom. Settings are kept in `localStorage`.
+
+## Styling
+
+The page uses [Tailwind CSS 4](https://tailwindcss.com) with [DaisyUI 5](https://daisyui.com) for controls
+(`btn`, `join`, `dropdown`, `input`, `toast`, `alert`, `loading`). `bun-plugin-tailwind` (in `bunfig.toml`) builds the CSS
+for the HTML import. `src/web/app.css` loads Tailwind, then `board.css`, the board's own look: lanes, cards and arrows.
+
+- The theme picker sets `data-theme` on `<html>`. DaisyUI and `board.css` both read it.
+- Do not name a CSS variable after one DaisyUI uses, such as `--border` or `--size`: the controls break.
+- `bun --hot` does not rebuild the CSS when only `board.css` changes. Restart the server.
+
 ## Layout
 
 - `src/server.ts`: `Bun.serve` routes (`/`, `/api/board`, `POST /api/refresh`, `/mcp`).
@@ -71,7 +87,7 @@ Never edit a migration that already ran on your `dolphin.db`; write a new one.
 - `src/board.ts`: the board query.
 - `src/mcp.ts`: MCP tools. `src/arrange.ts`: the writes behind them and the rule checks. `src/rules.ts`: the lane rules.
 - `src/import.ts`: one-time import of a `data.json` snapshot.
-- `src/web/`: the Preact page.
+- `src/web/`: the Preact page. `app.css` is the CSS entry; `board.css` holds the board styles.
 
 Task facts (title, status) come from the trackers. Lanes, positions and dependencies are set by hand or by Claude.
 `dolphin.db` and `data*.json` hold work data and are git-ignored.
