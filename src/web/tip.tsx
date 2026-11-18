@@ -24,7 +24,7 @@ export function Tip({ task: t, x, y, waitsFor, blocks }: Props) {
   }, [x, y, t.id]);
 
   return (
-    <div class="tip" ref={ref} style={pos}>
+    <div class="tip sensitive" ref={ref} style={pos}>
       <b>{t.id}</b> · {t.status}
       <br />
       {t.title}
