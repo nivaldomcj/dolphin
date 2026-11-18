@@ -115,6 +115,11 @@ describe("parallel calls", () => {
 });
 
 describe("rules", () => {
+  test("a pin with only empty matchers matches nothing", async () => {
+    await writeRules({ pins: [{ lane: "B", app: "", label: "everything" }] });
+    expect((await placeTask("T1", "A")).warnings).toEqual([]);
+  });
+
   test("writes only the parts given", async () => {
     await writeRules({ text: "- one rule" });
     expect(await readRules()).toEqual({ text: "- one rule", pins: [{ lane: "A", kind: "release", app: "billing", label: "billing release" }] });

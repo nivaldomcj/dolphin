@@ -37,5 +37,8 @@ export async function writeRules(next: Partial<Rules>): Promise<Rules> {
   return readRules();
 }
 
-export const pinMatches = (pin: Pin, kind: string | null, app: string | null): boolean =>
-  (pin.kind === undefined || kind === pin.kind) && (pin.app === undefined || (app ?? "").toLowerCase().includes(pin.app.toLowerCase()));
+/** An empty `kind` or `app` counts as absent, so a pin with neither matches nothing rather than every task. */
+export function pinMatches(pin: Pin, kind: string | null, app: string | null): boolean {
+  if (!pin.kind && !pin.app) return false;
+  return (!pin.kind || kind === pin.kind) && (!pin.app || (app ?? "").toLowerCase().includes(pin.app.toLowerCase()));
+}

@@ -24,8 +24,8 @@ const taskId = z.string().describe("Task id, e.g. ENG-123");
 const pin = z
   .object({
     lane: z.string().describe("The lane matching tasks belong in"),
-    kind: z.string().optional().describe("Match tasks whose meta.kind is exactly this"),
-    app: z.string().optional().describe("Match tasks whose meta.app contains this, any case"),
+    kind: z.string().min(1).optional().describe("Match tasks whose meta.kind is exactly this"),
+    app: z.string().min(1).optional().describe("Match tasks whose meta.app contains this, any case"),
     label: z.string().min(1).describe('How a warning names the task, e.g. "release run"'),
   })
   .refine((p) => p.kind !== undefined || p.app !== undefined, "A pin needs `kind`, `app` or both.");

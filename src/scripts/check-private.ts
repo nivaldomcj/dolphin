@@ -35,11 +35,13 @@ const args = Bun.argv.slice(2);
 if (args[0] === "--message") {
   scan("commit message", (await Bun.file(args[1]!).text()).replace(/^#.*$/gm, ""));
 } else if (args[0] === "--staged") {
+  // --no-renames: a pure rename has no "+++" line, so it is read as an added file, new name and content included.
   let file = "";
-  for (const line of (await git("diff", "--cached", "-U0", "--no-color", "--diff-filter=d")).split("\n")) {
+  for (const line of (await git("diff", "--cached", "-U0", "--no-color", "--no-renames", "--diff-filter=d")).split("\n")) {
     if (line.startsWith("+++ ")) {
       file = line.slice(6);
-      scan("file name", file);
+      const m = hit(file);
+      if (m) findings.push(`${file}: file name matches ${m}`);
     } else if (line.startsWith("+")) {
       const m = hit(line);
       if (m) findings.push(`${file}: added line matches ${m}`);
@@ -47,7 +49,8 @@ if (args[0] === "--message") {
   }
 } else {
   for (const file of (await git("ls-files")).split("\n").filter(Boolean)) {
-    scan("file name", file);
+    const named = hit(file);
+    if (named) findings.push(`${file}: file name matches ${named}`);
     const blob = Bun.file(file);
     if (!(await blob.exists())) continue;
     const text = await blob.text();
