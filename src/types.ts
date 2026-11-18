@@ -36,3 +36,13 @@ export interface Board {
   tasks: Record<string, Task>;
   edges: [string, string][];
 }
+
+/** Result of `POST /api/refresh` and of the MCP `refresh` tool. */
+export interface RefreshSummary {
+  /** Tasks whose status or open/closed state changed. */
+  changes: { id: string; from: string; to: string }[];
+  /** Open tasks the board did not know. They show in lane N until someone places them. */
+  added: string[];
+  /** A source that failed leaves its tasks untouched; the other source still applies. */
+  errors: Partial<Record<Source, string>>;
+}
