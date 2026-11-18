@@ -49,7 +49,7 @@ export function RefreshButton({ onBoard }: { onBoard: (b: Board) => void }) {
 
   return (
     <>
-      <button type="button" class="btn btn-ghost btn-sm btn-square" title="Refresh statuses from Linear and GitHub" aria-label="Refresh" onClick={run} disabled={busy}>
+      <button type="button" class="tooltip tooltip-bottom btn btn-ghost btn-sm btn-square" data-tip="Refresh statuses from Linear and GitHub" aria-label="Refresh" onClick={run} disabled={busy}>
         {busy ? <span class="loading loading-spinner loading-xs" /> : "🔁"}
       </button>
       {toast && (
