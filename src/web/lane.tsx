@@ -1,7 +1,7 @@
 import type { Lane as LaneData, Task } from "../types";
 import { statusFill } from "./status";
 
-export type Mark = "hit" | "dim" | "rel-up" | "rel-down" | undefined;
+export type Mark = "current" | "hit" | "dim" | "rel-up" | "rel-down" | undefined;
 
 interface CardProps {
   task: Task;

@@ -49,19 +49,26 @@ export function RefreshButton({ onBoard }: { onBoard: (b: Board) => void }) {
 
   return (
     <>
-      <button type="button" class="refresh" onClick={run} disabled={busy}>🔄 Refresh</button>
+      <button type="button" class="btn btn-ghost btn-sm btn-square" title="Refresh statuses from Linear and GitHub" aria-label="Refresh" onClick={run} disabled={busy}>
+        {busy ? <span class="loading loading-spinner loading-xs" /> : "🔁"}
+      </button>
       {toast && (
-        <div class={`toast${toast.kind === "done" && toast.failed ? " failed" : ""}`} role="status">
+        <div class="toast toast-start toast-bottom z-20">
           {toast.kind === "busy" ? (
-            <span>Refreshing…</span>
+            <div role="status" class="alert">
+              <span class="loading loading-spinner loading-sm" />
+              <span>Refreshing…</span>
+            </div>
           ) : (
-            <>
-              <button type="button" class="toast-close" aria-label="Close" onClick={() => setToast(null)}>×</button>
-              <b>{toast.title}</b>
-              {toast.lines.length > 0 && (
-                <ul>{toast.lines.map((l) => <li key={l}>{l}</li>)}</ul>
-              )}
-            </>
+            <div role="status" class={`alert ${toast.failed ? "alert-error" : "alert-success"} alert-soft max-w-md items-start`}>
+              <div>
+                <b>{toast.title}</b>
+                {toast.lines.length > 0 && (
+                  <ul class="mt-1 list-disc pl-5 text-xs">{toast.lines.map((l) => <li key={l}>{l}</li>)}</ul>
+                )}
+              </div>
+              <button type="button" class="btn btn-ghost btn-xs btn-circle" aria-label="Close" onClick={() => setToast(null)}>✕</button>
+            </div>
           )}
         </div>
       )}
