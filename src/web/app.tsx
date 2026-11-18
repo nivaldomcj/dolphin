@@ -17,6 +17,15 @@ function App() {
   const [titles, setTitles] = usePref("titles", true);
   const [positions, setPositions] = usePref("positions", true);
   const [inLane, setInLane] = usePref("inLane", false);
+  /** Collapsed lane keys, stored as "A,X". */
+  const [collapsedPref, setCollapsedPref] = useStringPref("collapsed", "");
+  const collapsed = useMemo(() => new Set(collapsedPref.split(",").filter(Boolean)), [collapsedPref]);
+  const setLane = (key: string, isCollapsed: boolean) => {
+    const next = new Set(collapsed);
+    if (isCollapsed) next.add(key);
+    else next.delete(key);
+    setCollapsedPref([...next].join(","));
+  };
   const [legend, setLegend] = usePref("legend", false);
   const [privacy, setPrivacy] = usePref("privacy", false);
   const [theme, setTheme] = useStringPref("theme", "system");
@@ -65,8 +74,11 @@ function App() {
 
   useEffect(() => {
     const id = hitList[hitIndex];
+    const key = id && laneOf.get(id);
+    // A match in a collapsed lane would be invisible, so expand that lane first; this effect runs again after.
+    if (key && collapsed.has(key)) return setLane(key, false);
     if (id) boardRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [hitList, hitIndex]);
+  }, [hitList, hitIndex, collapsed]);
 
   const openSearch = useCallback(() => setSearchOpen(true), []);
   const closeSearch = () => {
@@ -121,13 +133,15 @@ function App() {
         {board && board.lanes.length === 0 && <p class="empty">The board is empty. Run `bun run import &lt;data.json&gt;`.</p>}
         {board && (
           <div class="board" ref={boardRef}>
-            <Arrows root={boardRef} board={board} laneOf={laneOf} showInLane={inLane} layoutKey={titles} />
+            <Arrows root={boardRef} board={board} laneOf={laneOf} showInLane={inLane} layoutKey={`${titles}|${collapsedPref}`} />
             {board.lanes.map((lane) => (
               <Lane
                 key={lane.key}
                 lane={lane}
                 tasks={board.tasks}
                 markOf={markOf}
+                collapsed={collapsed.has(lane.key)}
+                onToggle={() => setLane(lane.key, !collapsed.has(lane.key))}
                 onFocus={(id, e) => setFocus({ id, x: e.clientX, y: e.clientY })}
                 onMove={(e) => setFocus((f) => f && { ...f, x: e.clientX, y: e.clientY })}
                 onBlur={() => setFocus(null)}
