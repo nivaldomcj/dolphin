@@ -5,7 +5,7 @@ several tasks at the same time. Claude arranges the lanes through an MCP server;
 
 ![dolphin with the settings menu open, privacy mode on and the legend bar shown](docs/screenshot.jpg)
 
-_Privacy mode is on in the screenshot: titles and lane names are blurred._
+_Privacy mode is on in the screenshot: titles and lane names are hidden._
 
 ## Run
 
@@ -44,8 +44,9 @@ The header has 3 buttons:
 - 🔍 opens the search box (also ⌘F). Enter and Shift+Enter step through the matches; Esc clears.
 - 🎛️ opens the settings: theme `[💻|☀️|🌔]`, titles, positions, in-lane blockers, legend and privacy `[🙈|🙉]`.
 
-The legend shows as a bar at the bottom. Privacy mode blurs task titles, lane names and the hover card, so a
-screenshot shows only task ids, statuses and the layout. Settings are kept in `localStorage`.
+The legend shows as a bar at the bottom. Privacy mode replaces task titles and lane names with solid bars and
+hides the hover card, so a screenshot shows only task ids, statuses and the layout. It does not blur: blurred
+text keeps the glyph shapes and can sometimes be recovered. Settings are kept in `localStorage`.
 
 ## Refresh
 

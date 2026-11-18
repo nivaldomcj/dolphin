@@ -87,5 +87,17 @@ svg.arrows { position: absolute; inset: 0; z-index: 1; pointer-events: none; ove
 .tip .k { color: #b8b8c8; }
 .empty { padding: 32px; color: var(--muted); }
 
-/* Privacy mode: blur task titles, lane names and the hover card, so a screenshot shows only ids, statuses and layout. */
-body.private .sensitive { filter: blur(5px); user-select: none; }
+/*
+ * Privacy mode, for screenshots: task titles and lane names are not painted at all (transparent text under solid
+ * bars, one per line), and the hover card is hidden. A blur would keep the glyph shapes, which can be recovered.
+ */
+:root { --redact: rgba(0, 0, 0, 0.16); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --redact: rgba(255, 255, 255, 0.18); } }
+:root[data-theme="dark"] { --redact: rgba(255, 255, 255, 0.18); }
+body.private .sensitive {
+  color: transparent;
+  text-shadow: none;
+  user-select: none;
+  background: repeating-linear-gradient(to bottom, var(--redact) 0 calc(1lh - 0.4em), transparent calc(1lh - 0.4em) 1lh);
+}
+body.private .tip { display: none; }

@@ -79,7 +79,7 @@ export function Settings(p: Props) {
           value={p.privacy ? "on" : "off"}
           onChange={(v) => p.onPrivacy(v === "on")}
           options={[
-            { value: "on", label: "🙈", title: "Privacy on: blur titles and lane names" },
+            { value: "on", label: "🙈", title: "Privacy on: hide titles and lane names" },
             { value: "off", label: "🙉", title: "Privacy off" },
           ]}
         />
