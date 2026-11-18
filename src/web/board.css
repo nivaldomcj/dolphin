@@ -60,6 +60,11 @@ body { font-size: 14px; line-height: 1.4; background: var(--bg); color: var(--fg
 .lane-head { position: sticky; left: 0; z-index: 3; width: 190px; min-width: 190px; padding: 10px 12px; font-weight: 600;
              display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--line); }
 .lane-head small { font-weight: 400; color: var(--muted); }
+.lane-head { text-align: left; cursor: pointer; font: inherit; font-weight: 600; color: inherit; }
+.lane-head:hover { filter: brightness(0.96); }
+/* A collapsed lane keeps only its header line; the other lanes share the freed height. */
+.lane.collapsed { flex: 0 0 auto; }
+.lane.collapsed .lane-head { padding-top: 6px; padding-bottom: 6px; }
 .cards { flex: 1; display: flex; gap: 34px; padding: 22px 24px; align-items: center; }
 
 .card { position: relative; z-index: 2; width: 190px; padding: 9px 10px; font-weight: 600; font-size: 13px;
