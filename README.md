@@ -168,3 +168,7 @@ bun test   # runs on an in-memory database (test-setup.ts), never on dolphin.db
 
 Task facts (title, status) come from the trackers. Lanes, positions and dependencies are set by hand or by Claude.
 `dolphin.db`, `dolphin.config.ts` and `data*.json` hold work data and are git-ignored.
+
+## License
+
+[MIT](LICENSE).
