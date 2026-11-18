@@ -17,4 +17,5 @@ const server = Bun.serve({
   },
 });
 
-console.log(`dolphin on ${server.url}`);
+// Browsers send every *.localhost name to this machine. YouTube refuses some embeds on a bare-IP origin (the 🐬 easter egg).
+console.log(`dolphin on http://dolphin.localhost:${server.port}/`);

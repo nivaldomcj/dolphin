@@ -28,7 +28,7 @@ function Card({ task, pos, mark, onFocus, onMove, onBlur }: CardProps) {
     >
       <span class="pos">{pos}</span>
       <span class="id">{task.id}</span>
-      <span class="ttl">{task.title}</span>
+      <span class="ttl sensitive">{task.title}</span>
     </a>
   );
 }
@@ -37,22 +37,35 @@ interface LaneProps extends Omit<CardProps, "task" | "pos" | "mark"> {
   lane: LaneData;
   tasks: Record<string, Task>;
   markOf: (id: string) => Mark;
+  collapsed: boolean;
+  onToggle: () => void;
 }
 
-export function Lane({ lane, tasks, markOf, ...handlers }: LaneProps) {
+/** One lane. Its header toggles it: a collapsed lane is a thin row with only its key and task count. */
+export function Lane({ lane, tasks, markOf, collapsed, onToggle, ...handlers }: LaneProps) {
   return (
-    <div class="lane" style={{ "--lane-bg": lane.bg, "--lane-head": lane.head }}>
-      <div class="lane-head">
-        Lane {lane.key}
-        <small>{lane.name}</small>
-        <small>{lane.ids.length} tasks</small>
-      </div>
-      <div class="cards">
-        {lane.ids.map((id, i) => {
-          const task = tasks[id];
-          return task ? <Card key={id} task={task} pos={i + 1} mark={markOf(id)} {...handlers} /> : null;
-        })}
-      </div>
+    <div class={`lane${collapsed ? " collapsed" : ""}`} style={{ "--lane-bg": lane.bg, "--lane-head": lane.head }}>
+      <button type="button" class="lane-head" aria-expanded={!collapsed} onClick={onToggle}>
+        {collapsed ? (
+          <span>
+            ▸ Lane {lane.key} <small>· {lane.ids.length} tasks</small>
+          </span>
+        ) : (
+          <>
+            <span>▾ Lane {lane.key}</span>
+            <small class="sensitive">{lane.name}</small>
+            <small>{lane.ids.length} tasks</small>
+          </>
+        )}
+      </button>
+      {!collapsed && (
+        <div class="cards">
+          {lane.ids.map((id, i) => {
+            const task = tasks[id];
+            return task ? <Card key={id} task={task} pos={i + 1} mark={markOf(id)} {...handlers} /> : null;
+          })}
+        </div>
+      )}
     </div>
   );
 }
