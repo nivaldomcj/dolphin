@@ -38,7 +38,7 @@ has lanes it stops unless you add `--force`.
 | Dependencies | Set by hand or by Claude, never copied from Linear relations | Tracker relations across lanes read as noise. Someone has to decide which links matter. |
 | Linear | GraphQL through `fetch`, key in the macOS Keychain | No SDK and no `.env` file. |
 | GitHub | `gh api graphql` | Reuses the `gh` login, so no token to store. |
-| Lane rules | One string in `src/rules.ts` | Lanes are renamed every cycle. A rule engine would be overkill. |
+| Lane rules | One string in `src/core/rules.ts` | Lanes are renamed every cycle. A rule engine would be overkill. |
 
 ## Page
 
@@ -46,9 +46,10 @@ The header has 3 buttons:
 
 - 🔁 refreshes statuses from the trackers. A toast at the bottom left shows progress, then the changes.
 - 🔍 opens the search box (also ⌘F). Enter and Shift+Enter step through the matches; Esc clears.
-- 🎛️ opens the settings: theme `[💻|☀️|🌙]`, then `[🟢|🔴]` for titles, positions, in-lane blockers and legend, and privacy `[🙈|🙉]`.
+- 🎛️ opens the settings: theme `[💻|☀️|🌙]`, then `[🟢|🔴]` for titles, positions, in-lane blockers, completed and legend, and privacy `[🙈|🙉]`.
 
-Click a lane header to collapse that lane to one thin row (`▸ Lane X · 15 tasks`); the other lanes take the freed
+With `completed` off, Done, Canceled and "Not found" tasks are hidden; the other cards keep their position
+numbers, so they still match the MCP's positions. Click a lane header to collapse that lane to one thin row (`▸ Lane X · 15 tasks`); the other lanes take the freed
 height, and a search match inside a collapsed lane expands it. The legend shows as a bar at the bottom. Privacy mode replaces task titles and lane names with solid bars and
 hides the hover card, so a screenshot shows only task ids, statuses and the layout. It does not blur: blurred
 text keeps the glyph shapes and can sometimes be recovered. Settings are kept in `localStorage`.
@@ -63,7 +64,8 @@ know show in lane N. A refresh takes about 9 s, most of it waiting on GitHub.
   `security add-generic-password -s dolphin-linear-api-key -a "$USER" -w`
 - GitHub uses the `gh` CLI and its existing login. The project is set in `src/sources/github.ts`.
 
-If one source fails, the other still applies, and the toast shows the error.
+If one source fails, the other still applies, and the toast shows the error. A Linear task that Linear no longer
+returns (deleted, or out of your key's reach) is closed with the status "Not found in Linear", so its card fades.
 
 ## MCP
 
@@ -80,6 +82,9 @@ Tools:
 - `place_task` (id, lane, 1-based position), `reorder_lane` (lane, full id list), `unplace_task` (back to lane N).
 - `add_edge` and `remove_edge` (blocker, blocked). A loop is rejected.
 - `rename_lane` and `set_note`.
+
+The API and MCP routes accept only requests addressed to `127.0.0.1`, `localhost` or `dolphin.localhost` on the
+server's port, so a web page cannot reach them through DNS rebinding.
 
 Every write returns what it did and the rule warnings for the whole board: a blocker after the task it blocks,
 a cross-lane blocker that is not earlier, and a release outside lane A. Warnings never block a write.
@@ -117,7 +122,8 @@ bun test   # runs on an in-memory database (test-setup.ts), never on dolphin.db
 
 ## Layout
 
-- `src/server/`: `index.ts` (the `Bun.serve` routes: `/`, `/api/board`, `POST /api/refresh`, `/mcp`) and `mcp.ts` (the MCP tools).
+- `src/server/`: `index.ts` (the `Bun.serve` routes: `/`, `/api/board`, `POST /api/refresh`, `/mcp`), `mcp.ts` (the MCP
+  tools) and `guard.ts` (the Host/Origin check every API and MCP route goes through).
 - `src/core/`: the board logic, with no HTTP. `board.ts` reads the board, `arrange.ts` holds the writes behind the MCP
   tools and the rule checks, `refresh.ts` applies tracker facts, `rules.ts` holds the lane rules. Tests sit next to them.
 - `src/sources/`: one fetcher per tracker (Linear, GitHub).

@@ -39,22 +39,25 @@ interface LaneProps extends Omit<CardProps, "task" | "pos" | "mark"> {
   markOf: (id: string) => Mark;
   collapsed: boolean;
   onToggle: () => void;
+  /** Hide closed tasks. Shown cards keep their position number, so it still matches the MCP's positions. */
+  hideClosed: boolean;
 }
 
 /** One lane. Its header toggles it: a collapsed lane is a thin row with only its key and task count. */
-export function Lane({ lane, tasks, markOf, collapsed, onToggle, ...handlers }: LaneProps) {
+export function Lane({ lane, tasks, markOf, collapsed, onToggle, hideClosed, ...handlers }: LaneProps) {
+  const count = hideClosed ? lane.ids.filter((id) => !tasks[id]?.closed).length : lane.ids.length;
   return (
     <div class={`lane${collapsed ? " collapsed" : ""}`} style={{ "--lane-bg": lane.bg, "--lane-head": lane.head }}>
       <button type="button" class="lane-head" aria-expanded={!collapsed} onClick={onToggle}>
         {collapsed ? (
           <span>
-            ▸ Lane {lane.key} <small>· {lane.ids.length} tasks</small>
+            ▸ Lane {lane.key} <small>· {count} tasks</small>
           </span>
         ) : (
           <>
             <span>▾ Lane {lane.key}</span>
             <small class="sensitive">{lane.name}</small>
-            <small>{lane.ids.length} tasks</small>
+            <small>{count} tasks</small>
           </>
         )}
       </button>
@@ -62,7 +65,7 @@ export function Lane({ lane, tasks, markOf, collapsed, onToggle, ...handlers }: 
         <div class="cards">
           {lane.ids.map((id, i) => {
             const task = tasks[id];
-            return task ? <Card key={id} task={task} pos={i + 1} mark={markOf(id)} {...handlers} /> : null;
+            return task && !(hideClosed && task.closed) ? <Card key={id} task={task} pos={i + 1} mark={markOf(id)} {...handlers} /> : null;
           })}
         </div>
       )}

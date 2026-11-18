@@ -83,3 +83,26 @@ test("renameLane and setNote", async () => {
   await setNote("T1", "");
   expect((await readBoard()).tasks.T1?.note).toBeUndefined();
 });
+
+describe("parallel calls", () => {
+  test("a reorder racing a move never puts the moved task back", async () => {
+    // Either call may reach the database first; whichever order, the move must stick.
+    const [move] = await Promise.allSettled([placeTask("T1", "B"), reorderLane("A", ["T2", "T1", "RUN"])]);
+
+    expect(move.status).toBe("fulfilled");
+    expect(await lane("A")).not.toContain("T1");
+    expect(await lane("B")).toContain("T1");
+  });
+
+  test("a reorder that starts after a move sees the move and is rejected", async () => {
+    await placeTask("T1", "B");
+    expect(reorderLane("A", ["T2", "T1", "RUN"])).rejects.toThrow("Missing: none. Not in lane: T1.");
+  });
+
+  test("two edges that would form a loop cannot both be added", async () => {
+    const results = await Promise.allSettled([addEdge("T1", "T2"), addEdge("T2", "T1")]);
+
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect((await readBoard()).edges).toHaveLength(1);
+  });
+});

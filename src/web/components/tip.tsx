@@ -9,7 +9,7 @@ interface Props {
   blocks: string[];
 }
 
-/** Hover card that follows the pointer and flips to stay inside the window. */
+/** Hover card that follows the pointer, flipping and then clamping to stay inside the window. */
 export function Tip({ task: t, x, y, waitsFor, blocks }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: `${x + 14}px`, top: `${y + 16}px` });
@@ -20,6 +20,9 @@ export function Tip({ task: t, x, y, waitsFor, blocks }: Props) {
     let left = x + 14, top = y + 16;
     if (left + el.offsetWidth > innerWidth - 8) left = x - el.offsetWidth - 14;
     if (top + el.offsetHeight > innerHeight - 8) top = y - el.offsetHeight - 16;
+    // On a narrow window neither side may fit, so keep the card inside the window.
+    left = Math.max(8, Math.min(left, innerWidth - el.offsetWidth - 8));
+    top = Math.max(8, Math.min(top, innerHeight - el.offsetHeight - 8));
     setPos({ left: `${left}px`, top: `${top}px` });
   }, [x, y, t.id]);
 

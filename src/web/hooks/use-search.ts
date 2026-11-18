@@ -5,28 +5,37 @@ import type { Board } from "../../types";
  * Search state: the query, the matching task ids, and which match is current. Matches are in board
  * order, so stepping walks lane by lane, left to right.
  */
-export function useSearch(board: Board | null) {
+export function useSearch(board: Board | null, hideClosed = false) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
+  /** Bumped on every step and every new set of matches, so the page reveals the match even when its id repeats. */
+  const [seq, setSeq] = useState(0);
 
   const hits = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q || !board) return null;
     const match = (s?: string | null) => (s ?? "").toLowerCase().includes(q);
-    return new Set(Object.values(board.tasks).filter((t) => match(t.id) || match(t.title) || match(t.short) || match(t.app)).map((t) => t.id));
-  }, [query, board]);
+    const visible = Object.values(board.tasks).filter((t) => !(hideClosed && t.closed));
+    return new Set(visible.filter((t) => match(t.id) || match(t.title) || match(t.short) || match(t.app)).map((t) => t.id));
+  }, [query, board, hideClosed]);
 
   const list = useMemo(() => (hits && board ? board.lanes.flatMap((l) => l.ids).filter((id) => hits.has(id)) : []), [hits, board]);
 
-  useEffect(() => setIndex(0), [hits]);
+  useEffect(() => {
+    setIndex(0);
+    setSeq((n) => n + 1);
+  }, [hits]);
 
   const openSearch = useCallback(() => setOpen(true), []);
   const closeSearch = () => {
     setOpen(false);
     setQuery("");
   };
-  const step = (delta: 1 | -1) => setIndex((i) => (list.length ? (i + delta + list.length) % list.length : 0));
+  const step = (delta: 1 | -1) => {
+    setIndex((i) => (list.length ? (i + delta + list.length) % list.length : 0));
+    setSeq((n) => n + 1);
+  };
 
-  return { open, query, setQuery, hits, list, index, current: list[index], openSearch, closeSearch, step };
+  return { open, query, setQuery, hits, list, index, seq, current: list[index], openSearch, closeSearch, step };
 }

@@ -17,18 +17,28 @@ function App() {
   const { board, setBoard, error, graph } = useBoard();
   const display = useDisplay();
   const lanes = useCollapsedLanes();
-  const search = useSearch(board);
+  const search = useSearch(board, !display.completed);
   const [focus, setFocus] = useState<{ id: string; x: number; y: number } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const { laneOf, up, down } = graph;
 
+  // Reveal the current match on a new search or an explicit step, not on a lane toggle, so collapsing a lane during
+  // a search sticks while Enter still brings the match back.
+  const lanesRef = useRef(lanes);
+  lanesRef.current = lanes;
   useEffect(() => {
     const id = search.current;
-    const key = id && laneOf.get(id);
-    // A match in a collapsed lane would be invisible, so expand that lane first; this effect runs again after.
-    if (key && lanes.collapsed.has(key)) return lanes.setCollapsed(key, false);
-    if (id) boardRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [search.current, lanes.collapsed]);
+    if (!id) return;
+    const scroll = () =>
+      boardRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    const key = laneOf.get(id);
+    if (key && lanesRef.current.collapsed.has(key)) {
+      lanesRef.current.setCollapsed(key, false);
+      const frame = requestAnimationFrame(scroll); // after the expanded lane renders its cards
+      return () => cancelAnimationFrame(frame); // the match changed first: do not scroll to the old one
+    }
+    scroll();
+  }, [search.current, search.seq]);
 
   const markOf = (id: string): Mark => {
     if (search.hits && search.current === id) return "current";
@@ -63,7 +73,7 @@ function App() {
         {board && board.lanes.length === 0 && <p class="empty">The board is empty. Run `bun run import &lt;data.json&gt;`.</p>}
         {board && (
           <div class="board" ref={boardRef}>
-            <Arrows root={boardRef} board={board} laneOf={laneOf} showInLane={display.inLane} layoutKey={`${display.titles}|${lanes.key}`} />
+            <Arrows root={boardRef} board={board} laneOf={laneOf} showInLane={display.inLane} layoutKey={`${display.titles}|${display.completed}|${lanes.key}`} />
             {board.lanes.map((lane) => (
               <Lane
                 key={lane.key}
@@ -72,6 +82,7 @@ function App() {
                 markOf={markOf}
                 collapsed={lanes.collapsed.has(lane.key)}
                 onToggle={() => lanes.toggle(lane.key)}
+                hideClosed={!display.completed}
                 onFocus={(id, e) => setFocus({ id, x: e.clientX, y: e.clientY })}
                 onMove={(e) => setFocus((f) => f && { ...f, x: e.clientX, y: e.clientY })}
                 onBlur={() => setFocus(null)}

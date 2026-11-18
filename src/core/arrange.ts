@@ -98,13 +98,16 @@ export async function placeTask(id: string, lane: string, position?: number): Pr
 /** Sets the full order of a lane. The list must hold exactly the lane's current tasks. */
 export async function reorderLane(lane: string, ids: string[]): Promise<ArrangeResult> {
   await assertLane(lane);
-  const current = await laneIds(db, lane);
-  const missing = current.filter((id) => !ids.includes(id));
-  const extra = ids.filter((id) => !current.includes(id));
-  if (missing.length || extra.length || new Set(ids).size !== ids.length) {
-    throw new Error(`Lane ${lane} order must list its ${current.length} tasks once each. Missing: ${missing.join(", ") || "none"}. Not in lane: ${extra.join(", ") || "none"}.`);
-  }
-  await db.transaction().execute((trx) => writeLane(trx, lane, ids));
+  // Membership is read inside the transaction, so a move that lands first makes this reorder fail, not undo it.
+  await db.transaction().execute(async (trx) => {
+    const current = await laneIds(trx, lane);
+    const missing = current.filter((id) => !ids.includes(id));
+    const extra = ids.filter((id) => !current.includes(id));
+    if (missing.length || extra.length || new Set(ids).size !== ids.length) {
+      throw new Error(`Lane ${lane} order must list its ${current.length} tasks once each. Missing: ${missing.join(", ") || "none"}. Not in lane: ${extra.join(", ") || "none"}.`);
+    }
+    await writeLane(trx, lane, ids);
+  });
   return result(`Lane ${lane} reordered (${ids.length} tasks).`);
 }
 
@@ -118,8 +121,8 @@ export async function unplaceTask(id: string): Promise<ArrangeResult> {
 }
 
 /** True when `from` can already reach `to` through edges. */
-async function reaches(from: string, to: string): Promise<boolean> {
-  const edges = await db.selectFrom("edge").select(["a", "b"]).execute();
+async function reaches(q: Q, from: string, to: string): Promise<boolean> {
+  const edges = await q.selectFrom("edge").select(["a", "b"]).execute();
   const next = Map.groupBy(edges, (e) => e.a);
   const seen = new Set<string>();
   const stack = [from];
@@ -138,8 +141,11 @@ export async function addEdge(blocker: string, blocked: string): Promise<Arrange
   await assertTask(blocker);
   await assertTask(blocked);
   if (blocker === blocked) throw new Error("A task cannot block itself.");
-  if (await reaches(blocked, blocker)) throw new Error(`${blocked} already leads to ${blocker}; adding this edge makes a loop.`);
-  await db.insertInto("edge").values({ a: blocker, b: blocked }).onConflict((oc) => oc.doNothing()).execute();
+  // The loop check and the insert share one transaction, so two parallel calls cannot both pass the check.
+  await db.transaction().execute(async (trx) => {
+    if (await reaches(trx, blocked, blocker)) throw new Error(`${blocked} already leads to ${blocker}; adding this edge makes a loop.`);
+    await trx.insertInto("edge").values({ a: blocker, b: blocked }).onConflict((oc) => oc.doNothing()).execute();
+  });
   return result(`${blocker} now blocks ${blocked}.`);
 }
 

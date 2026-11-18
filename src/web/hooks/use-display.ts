@@ -1,5 +1,5 @@
 import { useEffect } from "preact/hooks";
-import type { Theme } from "../components/settings";
+import { isTheme, type Theme } from "../theme";
 import { usePref, useStringPref } from "./prefs";
 
 /** The display settings from the 🎛️ menu, kept in localStorage. Theme and privacy are applied to the document. */
@@ -8,8 +8,10 @@ export function useDisplay() {
   const [positions, setPositions] = usePref("positions", true);
   const [inLane, setInLane] = usePref("inLane", false);
   const [legend, setLegend] = usePref("legend", false);
+  const [completed, setCompleted] = usePref("completed", true);
   const [privacy, setPrivacy] = usePref("privacy", false);
-  const [theme, setTheme] = useStringPref("theme", "system");
+  const [stored, setTheme] = useStringPref("theme", "system");
+  const theme: Theme = isTheme(stored) ? stored : "system";
 
   useEffect(() => {
     if (theme === "system") delete document.documentElement.dataset.theme;
@@ -21,7 +23,7 @@ export function useDisplay() {
   }, [privacy]);
 
   return {
-    theme: theme as Theme,
+    theme,
     onTheme: setTheme,
     titles,
     onTitles: setTitles,
@@ -31,6 +33,8 @@ export function useDisplay() {
     onInLane: setInLane,
     legend,
     onLegend: setLegend,
+    completed,
+    onCompleted: setCompleted,
     privacy,
     onPrivacy: setPrivacy,
   };

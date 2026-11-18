@@ -4,11 +4,13 @@
  * so it refuses to run on a board that already has lanes unless --force is given.
  */
 import { db } from "../db";
-import type { TaskMeta } from "../types";
+import { PROJECT } from "../sources/github";
+import { LINEAR_ISSUE_URL } from "../sources/linear";
+import type { Source, TaskMeta } from "../types";
 
 interface Snapshot {
   lanes: { key: string; name: string; ids: string[] }[];
-  tasks: Record<string, TaskMeta & { title: string; status: string; url?: string; closed?: boolean }>;
+  tasks: Record<string, TaskMeta & { title: string; status: string; url?: string; closed?: boolean; source?: Source }>;
   edges: [string, string][];
 }
 
@@ -21,6 +23,21 @@ const COLORS: Record<string, [bg: string, head: string]> = {
   X: ["#e6f4f2", "#b4dcd6"],
 };
 const FALLBACK: [string, string] = ["#f3f3f3", "#dcdcdc"];
+
+/**
+ * Which tracker a snapshot task belongs to when the snapshot does not say: its url's host first, then the GitHub
+ * project's id prefix, then Linear's id shape (TEAM-123). Anything else stops the import rather than guess, because
+ * a refresh would close a task it wrongly sends to Linear.
+ */
+function trackerOf(id: string, url: string | undefined): Source {
+  // A url that cannot be parsed tells nothing about the tracker; fall through to the id.
+  const host = url && URL.canParse(url) ? new URL(url).hostname : "";
+  if (host === "github.com") return "github";
+  if (host === "linear.app") return "linear";
+  if (id.startsWith(`${PROJECT.prefix}-`)) return "github";
+  if (/^[A-Z][A-Z0-9]*-\d+$/.test(id)) return "linear";
+  throw new Error(`${id}: cannot tell its tracker; add "source": "linear" or "github" to it in the snapshot`);
+}
 
 const args = Bun.argv.slice(2);
 const force = args.includes("--force");
@@ -43,9 +60,10 @@ await db.transaction().execute(async (trx) => {
   for (const table of ["edge", "placement", "task", "lane"] as const) await trx.deleteFrom(table).execute();
 
   for (const [id, t] of Object.entries(snap.tasks)) {
-    const { title, status, url, closed, ...meta } = t;
-    const source = id.startsWith("ENG-") ? "linear" : "github";
-    const href = url ?? (source === "linear" ? `https://linear.app/acme/issue/${id}` : undefined);
+    const { title, status, url, closed, source: given, ...meta } = t;
+    if (given !== undefined && given !== "linear" && given !== "github") throw new Error(`${id}: unknown source "${given}"`);
+    const source = given ?? trackerOf(id, url);
+    const href = url ?? (source === "linear" ? `${LINEAR_ISSUE_URL}${id}` : undefined);
     if (!href) throw new Error(`${id}: a GitHub task needs a url in the snapshot`);
     await trx.insertInto("task").values({ id, source, title, status, url: href, closed: closed ? 1 : 0, meta: JSON.stringify(meta) }).execute();
   }
