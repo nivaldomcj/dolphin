@@ -1,4 +1,5 @@
 #!/bin/sh
+# dolphin hook: bun install replaces this file; it never replaces a hook without this line.
 # Branches made before the scan existed have no script to run.
 [ -f src/scripts/check-private.ts ] || exit 0
 exec bun src/scripts/check-private.ts --staged

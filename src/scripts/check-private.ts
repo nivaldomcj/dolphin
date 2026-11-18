@@ -11,7 +11,10 @@ if (terms.length === 0) {
   process.exit(0);
 }
 
-const matchers = terms.map((t) => (typeof t === "string" ? new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") : t));
+// A copy without `g` or `y`: those flags make test() resume from lastIndex and skip later matches.
+const matchers = terms.map((t) =>
+  typeof t === "string" ? new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") : new RegExp(t.source, t.flags.replace(/[gy]/g, "")),
+);
 const hit = (line: string) => matchers.find((m) => m.test(line));
 
 const git = async (...args: string[]) => {
