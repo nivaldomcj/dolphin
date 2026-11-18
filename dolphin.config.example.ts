@@ -9,8 +9,8 @@ export default defineConfig({
     owner: "example-org",
     number: 1,
     login: "your-github-login",
-    repo: "example-org/example-repo",
-    prefix: "REPO",
+    repo: "example-org/docs",
+    prefix: "SITE",
     open: ["Backlog", "Todo", "Doing", "Stuck", "Review"],
   },
 
@@ -18,7 +18,7 @@ export default defineConfig({
   tones: { Doing: "progress", Stuck: "blocked", Review: "done", Shipped: "done" },
 
   // Your employer, client and project names. Commits that contain them are refused.
-  denylist: ["acme-corp", /\bSECRET-\d+/],
+  denylist: ["your-employer", /\bSECRET-\d+/],
 
   backup: { dir: `${Bun.env.HOME}/Library/Mobile Documents/com~apple~CloudDocs/dolphin`, keep: 14 },
 });
