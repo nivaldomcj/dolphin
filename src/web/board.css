@@ -35,6 +35,8 @@
   --blk: #6f8cff;
 }
 html, body, #app { height: 100%; }
+/* Only the board scrolls: an overlay past the window edge (a tooltip) must not add a page scrollbar. */
+html, body { overflow: hidden; }
 body { font-size: 14px; line-height: 1.4; background: var(--bg); color: var(--fg); }
 #app { display: flex; flex-direction: column; }
 
