@@ -28,32 +28,27 @@ if (!path) {
 }
 const snap = (await Bun.file(path).json()) as Snapshot;
 
-const insertLane = db.prepare("INSERT INTO lane (key, name, bg, head, ord) VALUES (?, ?, ?, ?, ?)");
-const insertTask = db.prepare("INSERT INTO task (id, source, title, status, url, closed, meta) VALUES (?, ?, ?, ?, ?, ?, ?)");
-const insertPlacement = db.prepare("INSERT INTO placement (task_id, lane_key, pos) VALUES (?, ?, ?)");
-const insertEdge = db.prepare("INSERT OR IGNORE INTO edge (a, b) VALUES (?, ?)");
-
-db.transaction(() => {
-  db.run("DELETE FROM edge; DELETE FROM placement; DELETE FROM task; DELETE FROM lane;");
+await db.transaction().execute(async (trx) => {
+  for (const table of ["edge", "placement", "task", "lane"] as const) await trx.deleteFrom(table).execute();
 
   for (const [id, t] of Object.entries(snap.tasks)) {
     const { title, status, url, closed, ...meta } = t;
     const source = id.startsWith("ENG-") ? "linear" : "github";
     const href = url ?? (source === "linear" ? `https://linear.app/acme/issue/${id}` : undefined);
     if (!href) throw new Error(`${id}: a GitHub task needs a url in the snapshot`);
-    insertTask.run(id, source, title, status, href, closed ? 1 : 0, JSON.stringify(meta));
+    await trx.insertInto("task").values({ id, source, title, status, url: href, closed: closed ? 1 : 0, meta: JSON.stringify(meta) }).execute();
   }
 
-  snap.lanes
-    .filter((l) => l.key !== "N")
-    .forEach((lane, ord) => {
-      const [bg, head] = COLORS[lane.key] ?? FALLBACK;
-      insertLane.run(lane.key, lane.name, bg, head, ord);
-      lane.ids.forEach((id, pos) => insertPlacement.run(id, lane.key, pos));
-    });
+  const lanes = snap.lanes.filter((l) => l.key !== "N");
+  for (const [ord, lane] of lanes.entries()) {
+    const [bg, head] = COLORS[lane.key] ?? FALLBACK;
+    await trx.insertInto("lane").values({ key: lane.key, name: lane.name, bg, head, ord }).execute();
+    for (const [pos, task_id] of lane.ids.entries()) await trx.insertInto("placement").values({ task_id, lane_key: lane.key, pos }).execute();
+  }
 
-  for (const [a, b] of snap.edges) insertEdge.run(a, b);
-})();
+  for (const [a, b] of snap.edges) await trx.insertInto("edge").values({ a, b }).onConflict((oc) => oc.doNothing()).execute();
+});
 
-const count = (table: string) => db.query<{ n: number }, []>(`SELECT count(*) AS n FROM ${table}`).get()?.n;
-console.log(`Imported ${count("lane")} lanes, ${count("task")} tasks, ${count("placement")} placements, ${count("edge")} edges.`);
+const count = async (table: "lane" | "task" | "placement" | "edge") =>
+  (await db.selectFrom(table).select((eb) => eb.fn.countAll<number>().as("n")).executeTakeFirstOrThrow()).n;
+console.log(`Imported ${await count("lane")} lanes, ${await count("task")} tasks, ${await count("placement")} placements, ${await count("edge")} edges.`);

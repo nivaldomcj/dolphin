@@ -51,11 +51,24 @@ The rules live in `src/rules.ts`.
 bun test   # runs on an in-memory database (test-setup.ts), never on dolphin.db
 ```
 
+## Database
+
+dolphin uses [Kysely](https://kysely.dev) on `bun:sqlite`. Migrations run when the server starts.
+
+To change the schema:
+
+1. Add `src/db/migrations/NNNN_name.ts` with `up` (and `down`), using `db.schema`.
+2. List it in `src/db/migrations/index.ts`.
+3. Update the row types in `src/db/schema.ts`.
+
+Never edit a migration that already ran on your `dolphin.db`; write a new one.
+
 ## Layout
 
 - `src/server.ts`: `Bun.serve` routes (`/`, `/api/board`, `POST /api/refresh`, `/mcp`).
 - `src/refresh.ts` and `src/sources/`: the refresh, with one fetcher per tracker.
-- `src/db.ts`: SQLite schema and the board query.
+- `src/db/`: Kysely over `bun:sqlite` (`bun-sqlite.ts` adapts it to Kysely's SqliteDialect), the row types in `schema.ts`, and `migrations/`.
+- `src/board.ts`: the board query.
 - `src/mcp.ts`: MCP tools. `src/arrange.ts`: the writes behind them and the rule checks. `src/rules.ts`: the lane rules.
 - `src/import.ts`: one-time import of a `data.json` snapshot.
 - `src/web/`: the Preact page.

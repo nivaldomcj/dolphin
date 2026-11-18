@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { z } from "zod";
 import { addEdge, checkRules, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask, type ArrangeResult } from "./arrange";
-import { readBoard } from "./db";
+import { readBoard } from "./board";
 import { refresh } from "./refresh";
 import { RULES } from "./rules";
 
@@ -11,9 +11,9 @@ type ToolReply = { content: { type: "text"; text: string }[]; isError?: boolean 
 const reply = (value: unknown): ToolReply => ({ content: [{ type: "text", text: JSON.stringify(value) }] });
 
 /** Runs a write and reports a thrown error as a tool error, so Claude can read it and correct the call. */
-function write(fn: () => ArrangeResult): ToolReply {
+async function write(fn: () => Promise<ArrangeResult>): Promise<ToolReply> {
   try {
-    return reply(fn());
+    return reply(await fn());
   } catch (e) {
     return { content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }], isError: true };
   }
@@ -28,7 +28,7 @@ function buildServer(): McpServer {
   mcp.registerTool(
     "get_board",
     { description: "Read the lane rules, every lane with its tasks in order, the dependency edges, and the current rule warnings. Call it before arranging." },
-    async () => reply({ rules: RULES, warnings: checkRules(), ...readBoard() }),
+    async () => reply({ rules: RULES, warnings: await checkRules(), ...(await readBoard()) }),
   );
 
   mcp.registerTool(
