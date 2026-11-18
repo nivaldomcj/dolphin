@@ -64,8 +64,10 @@ export function Arrows({ root, board, laneOf, showInLane, layoutKey }: Props) {
     };
     redraw();
     document.fonts?.ready.then(redraw);
-    addEventListener("resize", redraw);
-    return () => removeEventListener("resize", redraw);
+    // Any board resize moves the cards: the window, the legend bar taking height, card widths changing.
+    const observer = new ResizeObserver(redraw);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [board, laneOf, showInLane, layoutKey]);
 
   return (
