@@ -86,3 +86,6 @@ svg.arrows { position: absolute; inset: 0; z-index: 1; pointer-events: none; ove
 .tip b { font-size: 13px; }
 .tip .k { color: #b8b8c8; }
 .empty { padding: 32px; color: var(--muted); }
+
+/* Privacy mode: blur task titles, lane names and the hover card, so a screenshot shows only ids, statuses and layout. */
+body.private .sensitive { filter: blur(5px); user-select: none; }

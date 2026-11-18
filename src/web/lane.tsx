@@ -28,7 +28,7 @@ function Card({ task, pos, mark, onFocus, onMove, onBlur }: CardProps) {
     >
       <span class="pos">{pos}</span>
       <span class="id">{task.id}</span>
-      <span class="ttl">{task.title}</span>
+      <span class="ttl sensitive">{task.title}</span>
     </a>
   );
 }
@@ -44,7 +44,7 @@ export function Lane({ lane, tasks, markOf, ...handlers }: LaneProps) {
     <div class="lane" style={{ "--lane-bg": lane.bg, "--lane-head": lane.head }}>
       <div class="lane-head">
         Lane {lane.key}
-        <small>{lane.name}</small>
+        <small class="sensitive">{lane.name}</small>
         <small>{lane.ids.length} tasks</small>
       </div>
       <div class="cards">

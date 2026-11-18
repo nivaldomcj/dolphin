@@ -17,6 +17,7 @@ function App() {
   const [positions, setPositions] = usePref("positions", true);
   const [inLane, setInLane] = usePref("inLane", false);
   const [legend, setLegend] = usePref("legend", false);
+  const [privacy, setPrivacy] = usePref("privacy", false);
   const [theme, setTheme] = useStringPref("theme", "system");
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -28,6 +29,10 @@ function App() {
     if (theme === "system") delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    document.body.classList.toggle("private", privacy);
+  }, [privacy]);
 
   useEffect(() => {
     fetch("/api/board")
@@ -106,6 +111,8 @@ function App() {
           onInLane={setInLane}
           legend={legend}
           onLegend={setLegend}
+          privacy={privacy}
+          onPrivacy={setPrivacy}
         />
       </header>
       <div class={`scroller${titles ? "" : " notitle"}${positions ? "" : " nopos"}`}>

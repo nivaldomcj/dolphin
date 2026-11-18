@@ -50,6 +50,8 @@ interface Props {
   onInLane: (v: boolean) => void;
   legend: boolean;
   onLegend: (v: boolean) => void;
+  privacy: boolean;
+  onPrivacy: (v: boolean) => void;
 }
 
 /** The 🎛️ button and its dropdown of display settings. Clicking outside closes it (DaisyUI focus dropdown). */
@@ -57,7 +59,7 @@ export function Settings(p: Props) {
   return (
     <div class="dropdown dropdown-end">
       <div tabIndex={0} role="button" class="btn btn-ghost btn-sm btn-square" title="Settings" aria-label="Settings">🎛️</div>
-      <div tabIndex={0} class="dropdown-content z-30 mt-2 grid grid-cols-[auto_auto] items-center gap-x-6 gap-y-2 rounded-box bg-base-100 p-4 text-sm shadow-lg ring-1 ring-base-300">
+      <div tabIndex={0} class="dropdown-content z-30 mt-2 grid whitespace-nowrap grid-cols-[auto_auto] items-center gap-x-6 gap-y-2 rounded-box bg-base-100 p-4 text-sm shadow-lg ring-1 ring-base-300">
         <span>theme</span>
         <Segmented
           value={p.theme}
@@ -72,6 +74,15 @@ export function Settings(p: Props) {
         <Switch label="positions" value={p.positions} onChange={p.onPositions} />
         <Switch label="in-lane blockers" value={p.inLane} onChange={p.onInLane} />
         <Switch label="legend" value={p.legend} onChange={p.onLegend} />
+        <span>privacy</span>
+        <Segmented
+          value={p.privacy ? "on" : "off"}
+          onChange={(v) => p.onPrivacy(v === "on")}
+          options={[
+            { value: "on", label: "🙈", title: "Privacy on: blur titles and lane names" },
+            { value: "off", label: "🙉", title: "Privacy off" },
+          ]}
+        />
       </div>
     </div>
   );
