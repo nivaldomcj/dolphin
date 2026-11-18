@@ -7,3 +7,6 @@ export const RULES = `
 - Started tasks come first in a lane; umbrella tasks come last.
 - Lane X holds the GitHub project issues.
 `.trim();
+
+/** The lane that holds every release. The arrange tools warn when one sits elsewhere. */
+export const RELEASE_LANE = "A";

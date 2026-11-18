@@ -33,12 +33,30 @@ Connect Claude Code to the MCP server:
 claude mcp add --transport http dolphin http://127.0.0.1:4747/mcp
 ```
 
+Tools:
+
+- `get_board`: the rules, the lanes in order, the edges and the current rule warnings. Read it before arranging.
+- `refresh`: the same pull as the 🔄 button.
+- `place_task` (id, lane, 1-based position), `reorder_lane` (lane, full id list), `unplace_task` (back to lane N).
+- `add_edge` and `remove_edge` (blocker, blocked). A loop is rejected.
+- `rename_lane` and `set_note`.
+
+Every write returns what it did and the rule warnings for the whole board: a blocker after the task it blocks,
+a cross-lane blocker that is not earlier, and a release outside lane A. Warnings never block a write.
+The rules live in `src/rules.ts`.
+
+## Test
+
+```sh
+bun test   # runs on an in-memory database (test-setup.ts), never on dolphin.db
+```
+
 ## Layout
 
 - `src/server.ts`: `Bun.serve` routes (`/`, `/api/board`, `POST /api/refresh`, `/mcp`).
 - `src/refresh.ts` and `src/sources/`: the refresh, with one fetcher per tracker.
 - `src/db.ts`: SQLite schema and the board query.
-- `src/mcp.ts`: MCP tools. `src/rules.ts`: the lane rules Claude reads.
+- `src/mcp.ts`: MCP tools. `src/arrange.ts`: the writes behind them and the rule checks. `src/rules.ts`: the lane rules.
 - `src/import.ts`: one-time import of a `data.json` snapshot.
 - `src/web/`: the Preact page.
 
