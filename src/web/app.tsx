@@ -4,6 +4,7 @@ import type { Board } from "../types";
 import { Arrows } from "./arrows";
 import { Lane, type Mark } from "./lane";
 import { usePref, useStringPref } from "./prefs";
+import { RefreshButton } from "./refresh-button";
 import { Tip } from "./tip";
 
 function Legend() {
@@ -80,6 +81,7 @@ function App() {
         <Legend />
         <span class="hint">Hover: red ring = blockers, green ring = blocked tasks. Click opens the task.</span>
         <div class="controls">
+          <RefreshButton onBoard={setBoard} />
           <label><input type="checkbox" checked={titles} onChange={(e) => setTitles(e.currentTarget.checked)} /> Show titles</label>
           <label><input type="checkbox" checked={positions} onChange={(e) => setPositions(e.currentTarget.checked)} /> Show positions</label>
           <label><input type="checkbox" checked={inLane} onChange={(e) => setInLane(e.currentTarget.checked)} /> Show in-lane blockers</label>
