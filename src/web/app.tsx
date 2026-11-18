@@ -2,6 +2,7 @@ import { render } from "preact";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { Board } from "../types";
 import { Arrows } from "./arrows";
+import { Title } from "./easter-egg";
 import { Lane, type Mark } from "./lane";
 import { Legend } from "./legend";
 import { usePref, useStringPref } from "./prefs";
@@ -87,7 +88,7 @@ function App() {
   return (
     <>
       <header class="sticky top-0 z-10 flex items-center gap-2 border-b border-base-300 bg-base-200 px-4 py-2">
-        <h1 class="mr-auto text-base font-bold">🐬 dolphin</h1>
+        <Title />
         <RefreshButton onBoard={setBoard} />
         <Search
           open={searchOpen}

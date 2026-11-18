@@ -13,8 +13,10 @@ Needs Bun 1.4.4 or later: `bun run typecheck` calls `bun check`, which older Bun
 
 ```sh
 bun install
-bun run dev                        # http://127.0.0.1:4747
+bun run dev                        # http://localhost:4747
 ```
+
+Open the page as `localhost`, not `127.0.0.1`: YouTube refuses some embeds on a bare-IP address.
 
 `bun run import path/to/data.json` loads a board snapshot once. It replaces the whole board, so do not run it on a
 board you have arranged since.
