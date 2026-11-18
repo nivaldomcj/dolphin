@@ -42,7 +42,7 @@ The header has 3 buttons:
 
 - 🔁 refreshes statuses from the trackers. A toast at the bottom left shows progress, then the changes.
 - 🔍 opens the search box (also ⌘F). Enter and Shift+Enter step through the matches; Esc clears.
-- 🎛️ opens the settings: theme `[💻|☀️|🌔]`, titles, positions, in-lane blockers, legend and privacy `[🙈|🙉]`.
+- 🎛️ opens the settings: theme `[💻|☀️|🌙]`, then `[🟢|🔴]` for titles, positions, in-lane blockers and legend, and privacy `[🙈|🙉]`.
 
 The legend shows as a bar at the bottom. Privacy mode replaces task titles and lane names with solid bars and
 hides the hover card, so a screenshot shows only task ids, statuses and the layout. It does not blur: blurred

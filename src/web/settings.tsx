@@ -7,13 +7,13 @@ interface Option<T extends string> {
 /** A row of joined buttons where exactly one is active. */
 function Segmented<T extends string>({ value, options, onChange }: { value: T; options: Option<T>[]; onChange: (v: T) => void }) {
   return (
-    <div class="join">
+    <div class="join w-28">
       {options.map((o) => (
         <button
           type="button"
           key={o.value}
           title={o.title}
-          class={`btn btn-xs join-item ${o.value === value ? "btn-active btn-primary" : ""}`}
+          class={`btn btn-xs join-item flex-1 ${o.value === value ? "btn-active btn-primary" : ""}`}
           onClick={() => onChange(o.value)}
         >
           {o.label}
@@ -24,8 +24,8 @@ function Segmented<T extends string>({ value, options, onChange }: { value: T; o
 }
 
 const ON_OFF: Option<"on" | "off">[] = [
-  { value: "on", label: "on" },
-  { value: "off", label: "off" },
+  { value: "on", label: "🟢", title: "On" },
+  { value: "off", label: "🔴", title: "Off" },
 ];
 
 function Switch({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
@@ -67,7 +67,7 @@ export function Settings(p: Props) {
           options={[
             { value: "system", label: "💻", title: "System" },
             { value: "light", label: "☀️", title: "Light" },
-            { value: "dark", label: "🌔", title: "Dark" },
+            { value: "dark", label: "🌙", title: "Dark" },
           ]}
         />
         <Switch label="titles" value={p.titles} onChange={p.onTitles} />
