@@ -3,7 +3,7 @@
 A local companion page that splits my open tasks (Linear, GitHub Projects) into parallel lanes, so I can work on
 several tasks at the same time. Claude arranges the lanes through an MCP server; the page shows them.
 
-![dolphin with the settings menu open, privacy mode on and the legend bar shown](docs/screenshot.jpg)
+![dolphin with the settings menu open, privacy mode on and the legend bar shown](docs/screenshot.png)
 
 _Privacy mode is on in the screenshot: titles and lane names are hidden._
 
