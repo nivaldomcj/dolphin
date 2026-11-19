@@ -21,7 +21,7 @@ function Card({ task, pos, mark, onFocus, onMove, onBlur }: CardProps) {
       href={task.url}
       target="_blank"
       rel="noopener"
-      style={{ background: toneFill(task.tone) }}
+      style={{ "--fill": toneFill(task.tone) }}
       onMouseEnter={(e) => onFocus(task.id, e)}
       onMouseMove={onMove}
       onMouseLeave={onBlur}
