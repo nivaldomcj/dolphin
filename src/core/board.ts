@@ -1,9 +1,8 @@
 import { toneOf } from "../config";
 import { db } from "../db";
-import type { Board, Lane, Task, TaskMeta } from "../types";
+import { UNPLACED } from "./order";
+import type { Board, Task, TaskMeta } from "../types";
 
-/** Lane shown for tasks a refresh found but nobody placed yet. Not stored. */
-const UNPLACED: Omit<Lane, "ids"> = { key: "N", name: "New, not placed yet", bg: "#eeeeee", head: "#d6d6d6" };
 
 /** Reads lanes, tasks and edges as one board, lanes in order and tasks by position. */
 export async function readBoard(): Promise<Board> {

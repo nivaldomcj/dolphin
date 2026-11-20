@@ -99,6 +99,18 @@ body { font-size: 14px; line-height: 1.4; background: var(--bg); color: var(--fg
 .card.current { box-shadow: 0 0 0 4px #ff9f1c, 0 0 0 8px rgba(255, 159, 28, 0.35); transform: translateY(-2px); }
 .card.rel-up { box-shadow: 0 0 0 4px var(--ring-up); }
 .card.rel-down { box-shadow: 0 0 0 4px #2bb673; }
+/* Alt + drag: the dragged card fades, a bar marks the gap it would drop into, and a tag with its id follows the pointer. */
+.card.dragging { opacity: 0.35; }
+.card.drop-before::after, .card.drop-after::after { content: ""; position: absolute; top: -8px; bottom: -8px; width: 3px;
+                                                    border-radius: 2px; background: var(--blk); pointer-events: none; }
+/* Centred in the 34px gap between cards, past the 1.5px border. */
+.card.drop-before::after { left: -20px; }
+.card.drop-after::after { right: -20px; }
+.lane.drop-end { box-shadow: inset 0 0 0 3px var(--blk); }
+.drag-ghost { position: fixed; z-index: 30; pointer-events: none; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;
+              background: var(--blk); color: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); }
+body.moving, body.moving * { cursor: grabbing !important; user-select: none; }
+body.moving .card:hover { transform: none; }
 .notitle .card { width: auto; min-width: 104px; text-align: center; }
 .notitle .card .ttl { display: none; }
 .nopos .card .pos { display: none; }

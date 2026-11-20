@@ -8,7 +8,8 @@ import type { Board } from "../../types";
 export function useSearch(board: Board | null, hideClosed = false) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [index, setIndex] = useState(0);
+  /** The current match by id, not by place: a drag and drop reorders the matches but keeps this one current. */
+  const [currentId, setCurrentId] = useState<string | undefined>(undefined);
   /** Bumped on every step and every new set of matches, so the page reveals the match even when its id repeats. */
   const [seq, setSeq] = useState(0);
 
@@ -22,10 +23,14 @@ export function useSearch(board: Board | null, hideClosed = false) {
 
   const list = useMemo(() => (hits && board ? board.lanes.flatMap((l) => l.ids).filter((id) => hits.has(id)) : []), [hits, board]);
 
+  // A new set of matches starts at the first one. Keyed on the ids, not the Set, which every new board rebuilds.
+  const hitKey = hits ? [...hits].sort().join("\n") : null;
   useEffect(() => {
-    setIndex(0);
+    setCurrentId(list[0]);
     setSeq((n) => n + 1);
-  }, [hits]);
+  }, [hitKey]);
+
+  const index = Math.max(currentId === undefined ? 0 : list.indexOf(currentId), 0);
 
   const openSearch = useCallback(() => setOpen(true), []);
   const closeSearch = () => {
@@ -33,7 +38,7 @@ export function useSearch(board: Board | null, hideClosed = false) {
     setQuery("");
   };
   const step = (delta: 1 | -1) => {
-    setIndex((i) => (list.length ? (i + delta + list.length) % list.length : 0));
+    if (list.length) setCurrentId(list[(index + delta + list.length) % list.length]);
     setSeq((n) => n + 1);
   };
 

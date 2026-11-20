@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { addEdge, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask } from "./arrange";
+import { addEdge, moveTask, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask } from "./arrange";
 import { readBoard } from "./board";
 import { db } from "../db";
 import { readRules, writeRules } from "./rules";
@@ -45,6 +45,76 @@ describe("placeTask", () => {
 
   test("rejects an unknown lane", async () => {
     expect(placeTask("T1", "Z")).rejects.toThrow("Unknown lane Z");
+  });
+});
+
+describe("moveTask", () => {
+  test("moves a task before or after a card in its lane", async () => {
+    await moveTask("T2", "A", { id: "RUN", side: "before" });
+    expect(await lane("A")).toEqual(["T2", "RUN", "T1"]);
+    await moveTask("T2", "A", { id: "T1", side: "after" });
+    expect(await lane("A")).toEqual(["RUN", "T1", "T2"]);
+  });
+
+  test("moves a task across lanes and closes the gap", async () => {
+    expect((await moveTask("T1", "B", { id: "T3", side: "after" })).done).toBe("T1 is now B#2.");
+    expect(await lane("A")).toEqual(["RUN", "T2"]);
+    expect(await lane("B")).toEqual(["T3", "T1", "T4"]);
+  });
+
+  test("puts a task at the end of a lane without an anchor, even an empty lane", async () => {
+    await db.insertInto("lane").values({ key: "C", name: "c", bg: "", head: "", ord: 2 }).execute();
+    await moveTask("T1", "C");
+    expect(await lane("C")).toEqual(["T1"]);
+    await moveTask("T3", "A");
+    expect(await lane("A")).toEqual(["RUN", "T2", "T3"]);
+  });
+
+  test("places an unplaced task from lane N", async () => {
+    await moveTask("NEW", "B", { id: "T3", side: "before" });
+    expect(await lane("B")).toEqual(["NEW", "T3", "T4"]);
+    expect(await lane("N")).toEqual([]);
+  });
+
+  test("lane N unplaces the task", async () => {
+    await moveTask("T1", "N");
+    expect(await lane("A")).toEqual(["RUN", "T2"]);
+    expect(await lane("N")).toEqual(["T1", "NEW"]);
+  });
+
+  test("rejects an anchor that is not in the lane, and changes nothing", async () => {
+    await expect(moveTask("T1", "B", { id: "T2", side: "before" })).rejects.toThrow("T2 is not in that lane any more");
+    expect(await lane("A")).toEqual(["RUN", "T1", "T2"]);
+    expect(await lane("B")).toEqual(["T3", "T4"]);
+  });
+
+  test("a task anchored on itself stays put", async () => {
+    await moveTask("T1", "A", { id: "T1", side: "after" });
+    expect(await lane("A")).toEqual(["RUN", "T1", "T2"]);
+  });
+
+  test("rejects a task anchored on itself in another lane", async () => {
+    await expect(moveTask("T1", "B", { id: "T1", side: "after" })).rejects.toThrow("T1 is not in that lane any more");
+    expect(await lane("B")).toEqual(["T3", "T4"]);
+  });
+
+  test("refuses to put a closed task in lane N, where it would leave the board", async () => {
+    await db.updateTable("task").set({ closed: 1 }).where("id", "=", "T1").execute();
+    await expect(moveTask("T1", "N")).rejects.toThrow("T1 is closed; lane N lists open tasks only.");
+    expect(await lane("A")).toEqual(["RUN", "T1", "T2"]);
+  });
+
+  test("a refresh that closes the task while it moves to lane N keeps its placement", async () => {
+    // The move starts first, and the refresh's transaction queues behind the move's first query.
+    const move = moveTask("T1", "N");
+    const close = db.transaction().execute((trx) => trx.updateTable("task").set({ closed: 1 }).where("id", "=", "T1").execute());
+    const [moved] = await Promise.allSettled([move, close]);
+    expect(moved.status).toBe("rejected");
+    expect(await lane("A")).toEqual(["RUN", "T1", "T2"]);
+  });
+
+  test("warns when a pinned task leaves its lane", async () => {
+    expect((await moveTask("RUN", "B", { id: "T4", side: "after" })).warnings).toEqual(["RUN is a billing release in lane B, not lane A."]);
   });
 });
 
