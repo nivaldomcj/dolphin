@@ -63,6 +63,12 @@ height, and a search match inside a collapsed lane expands it. The legend shows 
 hides the hover card, so a screenshot shows only task ids, statuses and the layout. It does not blur: blurred
 text keeps the glyph shapes and can sometimes be recovered. Settings are kept in `localStorage`.
 
+Alt + drag a card to move it by hand: a blue bar marks the gap it will drop into, before or after the card under the
+pointer. Drop it on a lane header or a collapsed lane to put it at the end of that lane, or on lane N to unplace it.
+Lane N shows during a drag even when it is empty, and a completed card cannot go there. The board scrolls when the
+pointer nears its edge, and Esc cancels. A plain click still opens the task. The move is saved at once, the same as an
+MCP `place_task`, and a toast shows any rule warning that names the moved card.
+
 ## Refresh
 
 The 🔁 button (and the MCP `refresh` tool) pulls task statuses from Linear and from the GitHub project in `dolphin.config.ts`. It
@@ -100,7 +106,8 @@ Tools:
 The API and MCP routes accept only requests addressed to `127.0.0.1`, `localhost` or `dolphin.localhost` on the
 server's port, so a web page cannot reach them through DNS rebinding.
 
-Every write returns what it did and the rule warnings for the whole board: a blocker after the task it blocks,
+The page writes placements too: Alt + drag calls `POST /api/move`, which places the card next to the card it was
+dropped by, so a page loaded before an MCP write still drops where the user aimed. Every write returns what it did and the rule warnings for the whole board: a blocker after the task it blocks,
 a cross-lane blocker that is not earlier, and a pinned task outside its lane. Warnings never block a write.
 
 ## Database
@@ -152,10 +159,10 @@ bun test   # runs on an in-memory database (test-setup.ts), never on dolphin.db
 
 ## Layout
 
-- `src/server/`: `index.ts` (the `Bun.serve` routes: `/`, `/api/board`, `POST /api/refresh`, `/mcp`), `mcp.ts` (the MCP
+- `src/server/`: `index.ts` (the `Bun.serve` routes: `/`, `/api/board`, `POST /api/refresh`, `POST /api/move`, `/mcp`), `mcp.ts` (the MCP
   tools) and `guard.ts` (the Host/Origin check every API and MCP route goes through).
 - `src/core/`: the board logic, with no HTTP. `board.ts` reads the board, `arrange.ts` holds the writes behind the MCP
-  tools and the rule checks, `refresh.ts` applies tracker facts, `rules.ts` reads and writes the lane rules, `backup.ts` writes the daily copy. Tests sit next to them.
+  tools and the page's drag and drop, and the rule checks; `order.ts` is the move's list step, shared with the page; `refresh.ts` applies tracker facts, `rules.ts` reads and writes the lane rules, `backup.ts` writes the daily copy. Tests sit next to them.
 - `src/sources/`: one fetcher per tracker (Linear, GitHub).
 - `src/db/`: the Kysely setup, the `bun:sqlite` adapter, the row types and `migrations/`.
 - `src/scripts/`: `import.ts` loads a `data.json` snapshot (it refuses to replace a board that has lanes unless you

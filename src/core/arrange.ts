@@ -1,6 +1,7 @@
 import { type Kysely, sql } from "kysely";
 import { db } from "../db";
 import type { DB } from "../db/schema";
+import { type Anchor, insertNear, UNPLACED_LANE } from "./order";
 import { pinMatches, readRules } from "./rules";
 import type { TaskMeta } from "../types";
 
@@ -77,22 +78,51 @@ export async function checkRules(): Promise<string[]> {
 
 const result = async (done: string): Promise<ArrangeResult> => ({ done, warnings: await checkRules() });
 
+const without = (ids: string[], id: string) => ids.filter((x) => x !== id);
+
 /**
- * Moves a task to a lane at a 1-based position (default: the end). Works for unplaced tasks and moves inside a lane.
+ * The one write path behind every move: `build` turns the target lane's current ids into its new order with `id` in
+ * it, and the task leaves its old lane in the same transaction.
  */
-export async function placeTask(id: string, lane: string, position?: number): Promise<ArrangeResult> {
+async function relocate(id: string, lane: string, build: (ids: string[]) => string[]): Promise<ArrangeResult> {
   await assertTask(id);
   await assertLane(lane);
   await db.transaction().execute(async (trx) => {
+    const ids = build(await laneIds(trx, lane));
     const from = await placementOf(trx, id);
-    if (from) await writeLane(trx, from.lane_key, (await laneIds(trx, from.lane_key)).filter((x) => x !== id));
-    const ids = await laneIds(trx, lane);
-    const index = position === undefined ? ids.length : Math.min(Math.max(position - 1, 0), ids.length);
-    ids.splice(index, 0, id);
+    if (from && from.lane_key !== lane) await writeLane(trx, from.lane_key, without(await laneIds(trx, from.lane_key), id));
     await writeLane(trx, lane, ids);
   });
   const pos = (await laneIds(db, lane)).indexOf(id) + 1;
   return result(`${id} is now ${lane}#${pos}.`);
+}
+
+/**
+ * Moves a task to a lane at a 1-based position (default: the end). Works for unplaced tasks and moves inside a lane.
+ */
+export function placeTask(id: string, lane: string, position?: number): Promise<ArrangeResult> {
+  return relocate(id, lane, (ids) => {
+    const rest = without(ids, id);
+    const index = position === undefined ? rest.length : Math.min(Math.max(position - 1, 0), rest.length);
+    rest.splice(index, 0, id);
+    return rest;
+  });
+}
+
+/**
+ * Moves a task next to another card (or to the end of a lane), as the page's drag and drop does. The anchor is a card,
+ * not a number, so a move from a page that missed a later MCP write still lands next to the card the user saw; an
+ * anchor that has left the lane is an error. Lane N unplaces the task.
+ */
+export async function moveTask(id: string, lane: string, at?: Anchor): Promise<ArrangeResult> {
+  if (lane === UNPLACED_LANE) {
+    // Lane N lists open tasks only, so an unplaced closed task would leave the board. The page checks this too, but
+    // it can be out of date: a refresh may have closed the task since it loaded.
+    const row = await db.selectFrom("task").select("closed").where("id", "=", id).executeTakeFirst();
+    if (row?.closed) throw new Error(`${id} is closed; lane N lists open tasks only.`);
+    return unplaceTask(id);
+  }
+  return relocate(id, lane, (ids) => insertNear(ids, id, at));
 }
 
 /** Sets the full order of a lane. The list must hold exactly the lane's current tasks. */
@@ -116,7 +146,7 @@ export async function unplaceTask(id: string): Promise<ArrangeResult> {
   await assertTask(id);
   const from = await placementOf(db, id);
   if (!from) return result(`${id} was not placed.`);
-  await db.transaction().execute(async (trx) => writeLane(trx, from.lane_key, (await laneIds(trx, from.lane_key)).filter((x) => x !== id)));
+  await db.transaction().execute(async (trx) => writeLane(trx, from.lane_key, without(await laneIds(trx, from.lane_key), id)));
   return result(`${id} removed from lane ${from.lane_key}.`);
 }
 

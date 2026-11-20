@@ -1,19 +1,31 @@
 import type { Lane as LaneData, Task } from "../../types";
+import type { Target } from "../hooks/use-move";
 import { toneFill } from "../status";
 
 export type Mark = "current" | "hit" | "dim" | "rel-up" | "rel-down" | undefined;
+
+/** Where a drag would put its card, as the classes drawn on the cards next to the gap. */
+type Side = "drop-before" | "drop-after" | undefined;
 
 interface CardProps {
   task: Task;
   pos: number;
   mark: Mark;
+  dragging: boolean;
+  side: Side;
   onFocus: (id: string, e: MouseEvent) => void;
   onMove: (e: MouseEvent) => void;
   onBlur: () => void;
+  /** Alt + press starts a drag; see `useMove`. */
+  onGrab: (id: string, e: PointerEvent) => void;
+  onCardClick: (e: MouseEvent) => void;
+  onCardDragStart: (e: DragEvent) => void;
 }
 
-function Card({ task, pos, mark, onFocus, onMove, onBlur }: CardProps) {
-  const classes = ["card", task.kind === "umbrella" && "umbrella", task.closed && "closed", mark].filter(Boolean).join(" ");
+function Card({ task, pos, mark, dragging, side, onFocus, onMove, onBlur, onGrab, onCardClick, onCardDragStart }: CardProps) {
+  const classes = ["card", task.kind === "umbrella" && "umbrella", task.closed && "closed", mark, dragging && "dragging", side]
+    .filter(Boolean)
+    .join(" ");
   return (
     <a
       class={classes}
@@ -25,6 +37,9 @@ function Card({ task, pos, mark, onFocus, onMove, onBlur }: CardProps) {
       onMouseEnter={(e) => onFocus(task.id, e)}
       onMouseMove={onMove}
       onMouseLeave={onBlur}
+      onPointerDown={(e) => onGrab(task.id, e)}
+      onClick={onCardClick}
+      onDragStart={onCardDragStart}
     >
       <span class="pos">{pos}</span>
       <span class="id">{task.id}</span>
@@ -33,7 +48,7 @@ function Card({ task, pos, mark, onFocus, onMove, onBlur }: CardProps) {
   );
 }
 
-interface LaneProps extends Omit<CardProps, "task" | "pos" | "mark"> {
+interface LaneProps extends Omit<CardProps, "task" | "pos" | "mark" | "dragging" | "side"> {
   lane: LaneData;
   tasks: Record<string, Task>;
   markOf: (id: string) => Mark;
@@ -41,13 +56,23 @@ interface LaneProps extends Omit<CardProps, "task" | "pos" | "mark"> {
   onToggle: () => void;
   /** Hide closed tasks. Shown cards keep their position number, so it still matches the MCP's positions. */
   hideClosed: boolean;
+  /** The card being dragged, if any. */
+  dragId: string | undefined;
+  /** Where the drag would drop, if that changes anything. */
+  drop: Target | null;
 }
 
 /** One lane. Its header toggles it: a collapsed lane is a thin row with only its key and task count. */
-export function Lane({ lane, tasks, markOf, collapsed, onToggle, hideClosed, ...handlers }: LaneProps) {
+export function Lane({ lane, tasks, markOf, collapsed, onToggle, hideClosed, dragId, drop, ...handlers }: LaneProps) {
   const count = hideClosed ? lane.ids.filter((id) => !tasks[id]?.closed).length : lane.ids.length;
+  const here = drop?.lane === lane.key ? drop : null;
+  const sideOf = (id: string): Side => (here?.at?.id === id ? `drop-${here.at.side}` : undefined);
   return (
-    <div class={`lane${collapsed ? " collapsed" : ""}`} style={{ "--lane-bg": lane.bg, "--lane-head": lane.head }}>
+    <div
+      class={`lane${collapsed ? " collapsed" : ""}${here && !here.at ? " drop-end" : ""}`}
+      data-lane={lane.key}
+      style={{ "--lane-bg": lane.bg, "--lane-head": lane.head }}
+    >
       <button type="button" class="lane-head" aria-expanded={!collapsed} onClick={onToggle}>
         {collapsed ? (
           <span>
@@ -65,7 +90,9 @@ export function Lane({ lane, tasks, markOf, collapsed, onToggle, hideClosed, ...
         <div class="cards">
           {lane.ids.map((id, i) => {
             const task = tasks[id];
-            return task && !(hideClosed && task.closed) ? <Card key={id} task={task} pos={i + 1} mark={markOf(id)} {...handlers} /> : null;
+            return task && !(hideClosed && task.closed) ? (
+              <Card key={id} task={task} pos={i + 1} mark={markOf(id)} dragging={id === dragId} side={sideOf(id)} {...handlers} />
+            ) : null;
           })}
         </div>
       )}

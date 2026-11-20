@@ -1,14 +1,10 @@
-import { useEffect, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 import type { Board, RefreshSummary } from "../../types";
+import { type Notice, NoticeAlert, Toast, useAutoHide } from "./toast";
 
-/** A successful refresh hides itself after this long. A failure stays until closed. */
-const TOAST_MS = 6000;
+type State = { kind: "busy" } | ({ kind: "done" } & Notice);
 
-type Toast =
-  | { kind: "busy" }
-  | { kind: "done"; title: string; lines: string[]; failed: boolean };
-
-function describe(s: RefreshSummary): Toast {
+function describe(s: RefreshSummary): State {
   const errors = Object.entries(s.errors).map(([source, msg]) => `${source}: ${msg}`);
   const parts = [
     s.changes.length > 0 && `${s.changes.length} changed`,
@@ -25,14 +21,9 @@ function describe(s: RefreshSummary): Toast {
 
 /** Pulls statuses from Linear and GitHub, hands the new board to the page, and reports in a toast. */
 export function RefreshButton({ onBoard }: { onBoard: (b: Board) => void }) {
-  const [toast, setToast] = useState<Toast | null>(null);
+  const [toast, setToast] = useState<State | null>(null);
   const busy = toast?.kind === "busy";
-
-  useEffect(() => {
-    if (toast?.kind !== "done" || toast.failed) return;
-    const timer = setTimeout(() => setToast(null), TOAST_MS);
-    return () => clearTimeout(timer);
-  }, [toast]);
+  useAutoHide(toast?.kind === "done" ? toast : null, () => setToast(null));
 
   const run = async () => {
     setToast({ kind: "busy" });
@@ -53,24 +44,16 @@ export function RefreshButton({ onBoard }: { onBoard: (b: Board) => void }) {
         {busy ? <span class="loading loading-spinner loading-xs" /> : "🔁"}
       </button>
       {toast && (
-        <div class="toast toast-start toast-bottom z-20">
+        <Toast side="start">
           {toast.kind === "busy" ? (
             <div role="status" class="alert">
               <span class="loading loading-spinner loading-sm" />
               <span>Refreshing…</span>
             </div>
           ) : (
-            <div role="status" class={`alert ${toast.failed ? "alert-error" : "alert-success"} alert-soft max-w-md items-start`}>
-              <div>
-                <b>{toast.title}</b>
-                {toast.lines.length > 0 && (
-                  <ul class="mt-1 list-disc pl-5 text-xs">{toast.lines.map((l) => <li key={l}>{l}</li>)}</ul>
-                )}
-              </div>
-              <button type="button" class="btn btn-ghost btn-xs btn-circle" aria-label="Close" onClick={() => setToast(null)}>✕</button>
-            </div>
+            <NoticeAlert notice={toast} tone="success" onClose={() => setToast(null)} />
           )}
-        </div>
+        </Toast>
       )}
     </>
   );
