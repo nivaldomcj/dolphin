@@ -104,6 +104,15 @@ describe("moveTask", () => {
     expect(await lane("A")).toEqual(["RUN", "T1", "T2"]);
   });
 
+  test("a refresh that closes the task while it moves to lane N keeps its placement", async () => {
+    // The move starts first, and the refresh's transaction queues behind the move's first query.
+    const move = moveTask("T1", "N");
+    const close = db.transaction().execute((trx) => trx.updateTable("task").set({ closed: 1 }).where("id", "=", "T1").execute());
+    const [moved] = await Promise.allSettled([move, close]);
+    expect(moved.status).toBe("rejected");
+    expect(await lane("A")).toEqual(["RUN", "T1", "T2"]);
+  });
+
   test("warns when a pinned task leaves its lane", async () => {
     expect((await moveTask("RUN", "B", { id: "T4", side: "after" })).warnings).toEqual(["RUN is a billing release in lane B, not lane A."]);
   });

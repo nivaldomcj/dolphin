@@ -115,13 +115,9 @@ export function placeTask(id: string, lane: string, position?: number): Promise<
  * anchor that has left the lane is an error. Lane N unplaces the task.
  */
 export async function moveTask(id: string, lane: string, at?: Anchor): Promise<ArrangeResult> {
-  if (lane === UNPLACED_LANE) {
-    // Lane N lists open tasks only, so an unplaced closed task would leave the board. The page checks this too, but
-    // it can be out of date: a refresh may have closed the task since it loaded.
-    const row = await db.selectFrom("task").select("closed").where("id", "=", id).executeTakeFirst();
-    if (row?.closed) throw new Error(`${id} is closed; lane N lists open tasks only.`);
-    return unplaceTask(id);
-  }
+  // Lane N lists open tasks only, so an unplaced closed task would leave the board. The page checks this too, but it
+  // can be out of date: a refresh may have closed the task since it loaded.
+  if (lane === UNPLACED_LANE) return unplaceTask(id, { openOnly: true });
   return relocate(id, lane, (ids) => insertNear(ids, id, at));
 }
 
@@ -141,13 +137,22 @@ export async function reorderLane(lane: string, ids: string[]): Promise<ArrangeR
   return result(`Lane ${lane} reordered (${ids.length} tasks).`);
 }
 
-/** Takes a task out of its lane. An open task then shows in lane N; a closed one disappears. */
-export async function unplaceTask(id: string): Promise<ArrangeResult> {
+/**
+ * Takes a task out of its lane. An open task then shows in lane N; a closed one disappears. With `openOnly`, a closed
+ * task is refused instead, checked in the same transaction as the write, so a refresh cannot close it in between.
+ */
+export async function unplaceTask(id: string, { openOnly = false } = {}): Promise<ArrangeResult> {
   await assertTask(id);
-  const from = await placementOf(db, id);
-  if (!from) return result(`${id} was not placed.`);
-  await db.transaction().execute(async (trx) => writeLane(trx, from.lane_key, without(await laneIds(trx, from.lane_key), id)));
-  return result(`${id} removed from lane ${from.lane_key}.`);
+  const from = await db.transaction().execute(async (trx) => {
+    if (openOnly) {
+      const row = await trx.selectFrom("task").select("closed").where("id", "=", id).executeTakeFirst();
+      if (row?.closed) throw new Error(`${id} is closed; lane N lists open tasks only.`);
+    }
+    const from = await placementOf(trx, id);
+    if (from) await writeLane(trx, from.lane_key, without(await laneIds(trx, from.lane_key), id));
+    return from;
+  });
+  return result(from ? `${id} removed from lane ${from.lane_key}.` : `${id} was not placed.`);
 }
 
 /** True when `from` can already reach `to` through edges. */

@@ -107,6 +107,8 @@ export function useMove(board: Board | null, setBoard: (b: Board) => void, scrol
   const stop = useRef<(() => void) | null>(null);
   /** Only the newest move's reply may replace the board. */
   const seq = useRef(0);
+  /** Moves are sent one at a time, so the server saves them in the order they were dropped. */
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
 
   const update = (next: Drag | null) => {
     dragRef.current = next;
@@ -132,11 +134,15 @@ export function useMove(board: Board | null, setBoard: (b: Board) => void, scrol
     setBoard(after);
     const mine = ++seq.current;
     try {
-      const res = await fetch("/api/move", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id: d.id, lane: d.target.lane, at: d.target.at }),
-      });
+      const send = queue.current.then(() =>
+        fetch("/api/move", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ id: d.id, lane: d.target!.lane, at: d.target!.at }),
+        }),
+      );
+      queue.current = send.catch(() => {});
+      const res = await send;
       const data = (await res.json()) as { result?: { done: string; warnings: string[] }; error?: string; board?: Board };
       if (mine !== seq.current) return;
       if (data.board) setBoard(data.board);
