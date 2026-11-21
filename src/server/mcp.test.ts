@@ -151,6 +151,6 @@ test("remove_edge deletes a dependency, and says when there was none", async () 
 test("refresh reports what the trackers changed", async () => {
   // No tracker and no backup, so the tool reaches neither the network nor the backup folder.
   await withConfig(OFFLINE, async () => {
-    expect(json(await call("refresh"))).toEqual({ changes: [], added: [], errors: {} });
+    expect(json(await call("refresh"))).toEqual({ changes: [], added: [], reassigned: [], errors: {} });
   });
 });

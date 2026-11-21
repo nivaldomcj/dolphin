@@ -86,7 +86,9 @@ know show in lane N. A refresh takes about 9 s, most of it waiting on GitHub.
 - Card colors come from the status: Linear's own names have a color, and `tones` in the config adds yours.
 
 If one source fails, the other still applies, and the toast shows the error. A Linear task that Linear no longer
-returns (deleted, or out of your key's reach) is closed with the status "Not found in Linear", so its card fades.
+returns (deleted, or out of your key's reach) is closed with the status "Not found in Linear", so its card fades. A Linear
+task now assigned to someone else, or to nobody, is removed from the board with its position and dependencies, and
+the toast says who has it. If the list of your assigned issues fails to load, nothing is removed.
 
 ## MCP
 

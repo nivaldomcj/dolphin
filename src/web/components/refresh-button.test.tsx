@@ -8,7 +8,7 @@ useDom();
 
 describe("refresh", () => {
   test("a summary with nothing in it reads up to date", () => {
-    expect(describeRefresh({ changes: [], added: [], errors: {} })).toEqual({
+    expect(describeRefresh({ changes: [], added: [], reassigned: [], errors: {} })).toEqual({
       kind: "done",
       title: "Up to date",
       lines: [],
@@ -16,13 +16,28 @@ describe("refresh", () => {
     });
   });
 
-  test("a summary lists every change, new task and failed source", () => {
+  test("a summary lists every change, new task, reassigned task and failed source", () => {
     expect(
-      describeRefresh({ changes: [{ id: "T1", from: "Todo", to: "Done" }], added: ["T9", "T10"], errors: { github: "gh down" } }),
+      describeRefresh({
+        changes: [{ id: "T1", from: "Todo", to: "Done" }],
+        added: ["T9", "T10"],
+        reassigned: [
+          { id: "T4", to: "Sam" },
+          { id: "T5", to: null },
+        ],
+        errors: { github: "gh down" },
+      }),
     ).toEqual({
       kind: "done",
-      title: "1 changed, 2 new, 1 source failed",
-      lines: ["T1: Todo → Done", "T9: new, in lane N", "T10: new, in lane N", "github: gh down"],
+      title: "1 changed, 2 new, 2 reassigned, 1 source failed",
+      lines: [
+        "T1: Todo → Done",
+        "T9: new, in lane N",
+        "T10: new, in lane N",
+        "T4: reassigned to Sam, removed",
+        "T5: unassigned, removed",
+        "github: gh down",
+      ],
       failed: true,
     });
   });
@@ -39,7 +54,12 @@ describe("refresh", () => {
     expect((getByLabelText("Refresh") as HTMLButtonElement).disabled).toBe(true);
 
     await act(async () =>
-      reply(Response.json({ summary: { changes: [{ id: "T1", from: "Todo", to: "Done" }], added: [], errors: {} }, board: next })),
+      reply(
+        Response.json({
+          summary: { changes: [{ id: "T1", from: "Todo", to: "Done" }], added: [], reassigned: [], errors: {} },
+          board: next,
+        }),
+      ),
     );
     await waitFor(() => expect(container.textContent).toContain("1 changed"));
     expect(onBoard).toHaveBeenCalledWith(next);

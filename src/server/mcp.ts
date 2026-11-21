@@ -77,7 +77,7 @@ export function buildServer(): McpServer {
     "refresh",
     {
       description:
-        "Pull task statuses from Linear and GitHub. Returns the status changes, new unplaced tasks (lane N) and per-source errors.",
+        "Pull task statuses from Linear and GitHub. Returns the status changes, new unplaced tasks (lane N), tasks removed because they are now assigned to someone else, and per-source errors.",
     },
     async () => reply(await refresh()),
   );
