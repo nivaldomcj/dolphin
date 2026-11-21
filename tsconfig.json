@@ -12,5 +12,5 @@
     "noEmit": true,
     "types": ["bun"]
   },
-  "include": ["src", "e2e", "test-setup.ts"]
+  "include": ["src", "e2e", "test"]
 }

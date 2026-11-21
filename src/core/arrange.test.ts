@@ -1,37 +1,27 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { addEdge, moveTask, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask } from "./arrange";
 import { readBoard } from "./board";
+import { laneRow, placements, resetDb, taskRow } from "../../test/db";
 import { db } from "../db";
 import { readRules, writeRules } from "./rules";
 
 const lane = async (key: string) => (await readBoard()).lanes.find((l) => l.key === key)?.ids ?? [];
 
 beforeEach(async () => {
-  for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
+  await resetDb();
   await writeRules({ pins: [{ lane: "A", kind: "release", app: "billing", label: "billing release" }] });
-  const task = (id: string, meta = {}) => ({
-    id,
-    source: "linear" as const,
-    title: id,
-    status: "Todo",
-    url: "",
-    meta: JSON.stringify(meta),
-  });
+  const task = (id: string, meta = {}) => taskRow(id, { meta: JSON.stringify(meta) });
   await db
     .insertInto("task")
     .values([task("T1"), task("T2"), task("T3"), task("T4"), task("RUN", { kind: "release", app: "Billing" }), task("NEW")])
     .execute();
   await db
     .insertInto("lane")
-    .values([
-      { key: "A", name: "a", bg: "", head: "", ord: 0 },
-      { key: "B", name: "b", bg: "", head: "", ord: 1 },
-    ])
+    .values([laneRow("A", 0), laneRow("B", 1)])
     .execute();
-  const place = (key: string, ids: string[]) => ids.map((task_id, pos) => ({ task_id, lane_key: key, pos }));
   await db
     .insertInto("placement")
-    .values([...place("A", ["RUN", "T1", "T2"]), ...place("B", ["T3", "T4"])])
+    .values([...placements("A", ["RUN", "T1", "T2"]), ...placements("B", ["T3", "T4"])])
     .execute();
 });
 
@@ -87,7 +77,7 @@ describe("moveTask", () => {
   });
 
   test("puts a task at the end of a lane without an anchor, even an empty lane", async () => {
-    await db.insertInto("lane").values({ key: "C", name: "c", bg: "", head: "", ord: 2 }).execute();
+    await db.insertInto("lane").values(laneRow("C", 2)).execute();
     await moveTask("T1", "C");
     expect(await lane("C")).toEqual(["T1"]);
     await moveTask("T3", "A");

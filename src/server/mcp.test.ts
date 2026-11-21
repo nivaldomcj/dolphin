@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { config } from "../config";
+import { OFFLINE, withConfig } from "../../test/config";
+import { laneRow, placements, resetDb, taskRow } from "../../test/db";
 import { db } from "../db";
 import { writeRules } from "../core/rules";
 import { buildServer, handleMcp } from "./mcp";
@@ -9,26 +10,19 @@ import { buildServer, handleMcp } from "./mcp";
 let client: Client;
 
 beforeEach(async () => {
-  for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
+  await resetDb();
   await writeRules({ text: "", pins: [] });
   await db
     .insertInto("lane")
-    .values([
-      { key: "A", name: "a", bg: "", head: "", ord: 0 },
-      { key: "B", name: "b", bg: "", head: "", ord: 1 },
-    ])
+    .values([laneRow("A", 0), laneRow("B", 1)])
     .execute();
-  const task = (id: string) => ({ id, source: "linear" as const, title: id, status: "Todo", url: "", meta: "{}" });
   await db
     .insertInto("task")
-    .values([task("T1"), task("T2")])
+    .values([taskRow("T1"), taskRow("T2")])
     .execute();
   await db
     .insertInto("placement")
-    .values([
-      { task_id: "T1", lane_key: "A", pos: 0 },
-      { task_id: "T2", lane_key: "A", pos: 1 },
-    ])
+    .values(placements("A", ["T1", "T2"]))
     .execute();
 
   const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
@@ -154,12 +148,8 @@ test("remove_edge deletes a dependency, and says when there was none", async () 
 });
 
 test("refresh reports what the trackers changed", async () => {
-  const saved = { linear: config.linear, github: config.github, backup: config.backup };
   // No tracker and no backup, so the tool reaches neither the network nor the backup folder.
-  Object.assign(config, { linear: false, github: undefined, backup: false });
-  try {
+  await withConfig(OFFLINE, async () => {
     expect(json(await call("refresh"))).toEqual({ changes: [], added: [], errors: {} });
-  } finally {
-    Object.assign(config, saved);
-  }
+  });
 });

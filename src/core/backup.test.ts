@@ -3,23 +3,23 @@ import { mkdtemp, mkdir, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Database } from "bun:sqlite";
-import { config } from "../config";
+import { useConfig, withConfig } from "../../test/config";
+import { laneRow, resetDb } from "../../test/db";
 import { db } from "../db";
 import { backup, backupDaily } from "./backup";
 
 const localDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 const dir = await mkdtemp(join(tmpdir(), "dolphin-backup-"));
-const saved = config.backup;
-config.backup = { dir, keep: 2 };
-afterAll(async () => {
-  config.backup = saved;
-  await rm(dir, { recursive: true, force: true });
-});
+useConfig({ backup: { dir, keep: 2 } });
+afterAll(() => rm(dir, { recursive: true, force: true }));
 
 test("writes one copy a day, readable, and keeps the newest days", async () => {
-  for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
-  await db.insertInto("lane").values({ key: "A", name: "kept", bg: "", head: "", ord: 0 }).execute();
+  await resetDb();
+  await db
+    .insertInto("lane")
+    .values(laneRow("A", 0, { name: "kept" }))
+    .execute();
   await mkdir(join(dir, "2020-01-01"));
   await mkdir(join(dir, "notes"));
 
@@ -49,14 +49,12 @@ test("the daily backup logs the folder it wrote", async () => {
 test("the daily backup never throws: a failure is logged instead", async () => {
   const blocker = join(dir, "not-a-dir");
   await Bun.write(blocker, "a file where the backup folder should be");
-  config.backup = { dir: blocker, keep: 2 };
   const error = spyOn(console, "error").mockImplementation(() => {});
   try {
-    await backupDaily();
+    await withConfig({ backup: { dir: blocker, keep: 2 } }, backupDaily);
     expect(error).toHaveBeenCalledTimes(1);
     expect(String(error.mock.calls[0]?.[0])).toStartWith("backup failed: ");
   } finally {
     error.mockRestore();
-    config.backup = { dir, keep: 2 };
   }
 });

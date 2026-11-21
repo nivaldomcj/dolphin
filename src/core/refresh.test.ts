@@ -1,8 +1,9 @@
 import { beforeEach, expect, test } from "bun:test";
+import { OFFLINE, withConfig } from "../../test/config";
+import { laneRow, placements, resetDb, taskRow } from "../../test/db";
 import { db } from "../db";
 import type { Fact } from "../sources/types";
 import { readBoard } from "./board";
-import { config } from "../config";
 import { createRefresh, NOT_FOUND, refresh as refreshNow } from "./refresh";
 
 const fact = (id: string, status: string, closed = false): Fact => ({
@@ -20,21 +21,18 @@ let github: () => Promise<Fact[]> = async () => [];
 const refresh = createRefresh({ fetchLinear: () => linear(), fetchGithub: () => github() });
 
 beforeEach(async () => {
-  for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
-  await db.insertInto("lane").values({ key: "A", name: "a", bg: "", head: "", ord: 0 }).execute();
+  await resetDb();
+  await db.insertInto("lane").values(laneRow("A", 0)).execute();
   await db
     .insertInto("task")
     .values([
-      { id: "L1", source: "linear", title: "L1 title", status: "Todo", url: "https://x/L1", meta: JSON.stringify({ note: "keep me" }) },
-      { id: "G1", source: "github", title: "G1 title", status: "Backlog", url: "https://x/G1", meta: "{}" },
+      taskRow("L1", { title: "L1 title", url: "https://x/L1", meta: JSON.stringify({ note: "keep me" }) }),
+      taskRow("G1", { source: "github", title: "G1 title", status: "Backlog", url: "https://x/G1" }),
     ])
     .execute();
   await db
     .insertInto("placement")
-    .values([
-      { task_id: "L1", lane_key: "A", pos: 0 },
-      { task_id: "G1", lane_key: "A", pos: 1 },
-    ])
+    .values(placements("A", ["L1", "G1"]))
     .execute();
   linear = async () => ({ facts: [], missing: [] });
   github = async () => [];
@@ -187,12 +185,8 @@ test("partial Linear results apply, with the error reported and nothing closed a
 });
 
 test("the exported refresh reads the configured trackers and reports nothing when both are off", async () => {
-  const saved = { linear: config.linear, github: config.github, backup: config.backup };
-  Object.assign(config, { linear: false, github: undefined, backup: false });
-  try {
+  await withConfig(OFFLINE, async () => {
     expect(await refreshNow()).toEqual({ changes: [], added: [], errors: {} });
     expect((await readBoard()).tasks.L1?.status).toBe("Todo");
-  } finally {
-    Object.assign(config, saved);
-  }
+  });
 });

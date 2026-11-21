@@ -1,28 +1,16 @@
 import { beforeEach, expect, test } from "bun:test";
+import { laneRow, resetDb, taskRow } from "../../test/db";
 import { db } from "../db";
 import { readBoard } from "./board";
 
-beforeEach(async () => {
-  for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
-});
+beforeEach(resetDb);
 
-const task = (id: string, closed = 0, meta = {}) => ({
-  id,
-  source: "linear" as const,
-  title: id,
-  status: "Todo",
-  url: "",
-  closed,
-  meta: JSON.stringify(meta),
-});
+const task = (id: string, closed = 0, meta = {}) => taskRow(id, { closed, meta: JSON.stringify(meta) });
 
 test("lanes come in their order and tasks by position, with meta fields merged in", async () => {
   await db
     .insertInto("lane")
-    .values([
-      { key: "B", name: "b", bg: "", head: "", ord: 1 },
-      { key: "A", name: "a", bg: "", head: "", ord: 0 },
-    ])
+    .values([laneRow("B", 1), laneRow("A", 0)])
     .execute();
   await db
     .insertInto("task")
@@ -49,7 +37,7 @@ test("lanes come in their order and tasks by position, with meta fields merged i
 });
 
 test("open unplaced tasks show in lane N; closed unplaced tasks do not", async () => {
-  await db.insertInto("lane").values({ key: "A", name: "a", bg: "", head: "", ord: 0 }).execute();
+  await db.insertInto("lane").values(laneRow("A", 0)).execute();
   await db
     .insertInto("task")
     .values([task("OPEN"), task("DONE", 1)])
@@ -64,7 +52,7 @@ test("open unplaced tasks show in lane N; closed unplaced tasks do not", async (
 });
 
 test("there is no lane N when every open task is placed", async () => {
-  await db.insertInto("lane").values({ key: "A", name: "a", bg: "", head: "", ord: 0 }).execute();
+  await db.insertInto("lane").values(laneRow("A", 0)).execute();
   await db.insertInto("task").values(task("T1")).execute();
   await db.insertInto("placement").values({ task_id: "T1", lane_key: "A", pos: 0 }).execute();
 

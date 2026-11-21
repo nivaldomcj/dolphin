@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { db } from "../db";
+import { resetDb } from "../../test/db";
 import { readBoard } from "./board";
 import { BoardNotEmptyError, importSnapshot, PALETTE, type Snapshot, trackerOf } from "./import-snapshot";
 
-beforeEach(async () => {
-  for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
-});
+beforeEach(resetDb);
 
 describe("trackerOf", () => {
   test("the url's host decides first", () => {

@@ -1,5 +1,6 @@
-import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
-import { config } from "../config";
+import { beforeEach, expect, test } from "bun:test";
+import { OFFLINE, useConfig } from "../../test/config";
+import { laneRow, placements, resetDb, taskRow } from "../../test/db";
 import { db } from "../db";
 import { makeGuard } from "./guard";
 import { apiRoutes } from "./routes";
@@ -7,35 +8,22 @@ import { apiRoutes } from "./routes";
 const routes = apiRoutes(makeGuard(() => 4747));
 const host = { host: "localhost:4747" };
 
-const saved = { linear: config.linear, github: config.github, backup: config.backup };
-beforeAll(() => {
-  // /api/refresh must not reach Linear, GitHub or the backup folder.
-  Object.assign(config, { linear: false, github: undefined, backup: false });
-});
-afterAll(() => {
-  Object.assign(config, saved);
-});
+// /api/refresh must not reach Linear, GitHub or the backup folder.
+useConfig(OFFLINE);
 
 beforeEach(async () => {
-  for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
+  await resetDb();
   await db
     .insertInto("lane")
-    .values([
-      { key: "A", name: "a", bg: "", head: "", ord: 0 },
-      { key: "B", name: "b", bg: "", head: "", ord: 1 },
-    ])
+    .values([laneRow("A", 0), laneRow("B", 1)])
     .execute();
-  const task = (id: string) => ({ id, source: "linear" as const, title: id, status: "Todo", url: "", meta: "{}" });
   await db
     .insertInto("task")
-    .values([task("T1"), task("T2")])
+    .values([taskRow("T1"), taskRow("T2")])
     .execute();
   await db
     .insertInto("placement")
-    .values([
-      { task_id: "T1", lane_key: "A", pos: 0 },
-      { task_id: "T2", lane_key: "A", pos: 1 },
-    ])
+    .values(placements("A", ["T1", "T2"]))
     .execute();
 });
 
