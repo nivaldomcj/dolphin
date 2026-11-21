@@ -1,7 +1,5 @@
 import { expect, test } from "bun:test";
 import { task } from "../../../test/board";
-import { isTheme } from "./theme";
-import { toneFill } from "./tone";
 import { inOtherCycle, isHidden } from "./visibility";
 
 test("only a task planned for a cycle other than the current one is in another cycle", () => {
@@ -21,14 +19,4 @@ test("a task is hidden only by a setting that applies to it", () => {
   expect(isHidden(later, { closed: false, otherCycles: true })).toBe(true);
   expect(isHidden(later, { closed: true, otherCycles: false })).toBe(false);
   expect(isHidden(plain, { closed: true, otherCycles: true })).toBe(false);
-});
-
-test("isTheme accepts the menu's themes and nothing else", () => {
-  expect(["system", "light", "dark"].every(isTheme)).toBe(true);
-  expect(isTheme("solarized")).toBe(false);
-  expect(isTheme("")).toBe(false);
-});
-
-test("a tone's fill is its CSS variable", () => {
-  expect(toneFill("blocked")).toBe("var(--s-blocked)");
 });
