@@ -8,8 +8,6 @@ import { laneRow, resetDb } from "../../test/db";
 import { db } from "../db";
 import { backup, backupDaily } from "./backup";
 
-const localDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
 const dir = await mkdtemp(join(tmpdir(), "dolphin-backup-"));
 useConfig({ backup: { dir, keep: 2 } });
 afterAll(() => rm(dir, { recursive: true, force: true }));
@@ -39,8 +37,15 @@ test("writes one copy a day, readable, and keeps the newest days", async () => {
 test("the daily backup logs the folder it wrote", async () => {
   const log = spyOn(console, "log").mockImplementation(() => {});
   try {
+    const before = new Set(await readdir(dir));
     await backupDaily();
-    expect(log).toHaveBeenCalledWith(`backup written to ${join(dir, localDay(new Date()))}`);
+
+    // The folder it wrote is the one that was not there before; its name is today's date, whatever it is.
+    const written = (await readdir(dir)).filter((d) => !before.has(d));
+    expect(written).toHaveLength(1);
+    expect(written[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(await Bun.file(join(dir, written[0]!, "dolphin.db")).exists()).toBe(true);
+    expect(log).toHaveBeenCalledWith(`backup written to ${join(dir, written[0]!)}`);
   } finally {
     log.mockRestore();
   }
