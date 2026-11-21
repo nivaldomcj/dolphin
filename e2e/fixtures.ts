@@ -5,9 +5,9 @@ import { ENV } from "./playwright.config";
 
 const ROOT = join(import.meta.dirname, "..");
 
-/** Every test starts from the same demo board, written while the server keeps running. */
-export const test = base.extend<{ board: Page }>({
-  board: async ({ page }, use) => {
+/** Every test's page starts on the same demo board, written while the server keeps running. */
+export const test = base.extend<{ page: Page }>({
+  page: async ({ page }, use) => {
     execFileSync("bun", ["src/scripts/seed-demo.ts"], {
       cwd: ROOT,
       env: { ...process.env, ...ENV },

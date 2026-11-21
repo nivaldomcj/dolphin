@@ -1,6 +1,6 @@
 import { card, center, dropAt, expect, grab, laneEl, laneIds, test } from "./fixtures";
 
-test("the demo board loads with its lanes, cards and arrows", async ({ board: page }) => {
+test("the demo board loads with its lanes, cards and arrows", async ({ page }) => {
   await expect(page.locator(".lane")).toHaveCount(6);
   expect(await laneIds(page, "A")).toEqual(["ENG-101", "ENG-108", "ENG-112", "ENG-115"]);
   expect(await laneIds(page, "N")).toEqual(["ENG-160"]);
@@ -9,7 +9,7 @@ test("the demo board loads with its lanes, cards and arrows", async ({ board: pa
   await expect(page.locator("svg.arrows > path")).toHaveCount(14);
 });
 
-test("an Alt + drag into another lane saves the move", async ({ board: page }) => {
+test("an Alt + drag into another lane saves the move", async ({ page }) => {
   await grab(page, "ENG-160");
   const last = await center(card(page, "ENG-131"));
   await dropAt(page, { x: last.x + 120, y: last.y });
@@ -22,7 +22,7 @@ test("an Alt + drag into another lane saves the move", async ({ board: page }) =
   await expect.poll(() => laneIds(page, "B")).toEqual(["ENG-120", "ENG-124", "ENG-127", "ENG-131", "ENG-160"]);
 });
 
-test("dropping before a card puts it there, inside the same lane", async ({ board: page }) => {
+test("dropping before a card puts it there, inside the same lane", async ({ page }) => {
   await grab(page, "ENG-147");
   const first = await center(card(page, "ENG-140"));
   await dropAt(page, { x: first.x - 40, y: first.y });
@@ -32,7 +32,7 @@ test("dropping before a card puts it there, inside the same lane", async ({ boar
   await expect.poll(() => laneIds(page, "C")).toEqual(["ENG-147", "ENG-140", "ENG-143"]);
 });
 
-test("Esc cancels a drag and the board does not change", async ({ board: page }) => {
+test("Esc cancels a drag and the board does not change", async ({ page }) => {
   await grab(page, "ENG-160");
   const target = await center(card(page, "ENG-131"));
   await page.mouse.move(target.x, target.y, { steps: 5 });
@@ -45,7 +45,7 @@ test("Esc cancels a drag and the board does not change", async ({ board: page })
   await expect.poll(() => laneIds(page, "N")).toEqual(["ENG-160"]);
 });
 
-test("a plain click opens the card's link; an Alt click does not", async ({ board: page }) => {
+test("a plain click opens the card's link; an Alt click does not", async ({ page }) => {
   // The link opens a stub, not the real tracker: no network and no third-party call.
   await page.context().route("https://linear.app/**", (r) => r.fulfill({ body: "" }));
   // Whether each click reached the browser's default action. Chrome turns an unprevented Alt-click into a download,
@@ -68,7 +68,7 @@ test("a plain click opens the card's link; an Alt click does not", async ({ boar
   await (await popup).close();
 });
 
-test("holding a drag near the board's edge scrolls it", async ({ board: page }) => {
+test("holding a drag near the board's edge scrolls it", async ({ page }) => {
   await page.setViewportSize({ width: 700, height: 420 });
   const scroller = page.locator(".scroller");
   expect(await scroller.evaluate((el) => el.scrollTop)).toBe(0);
@@ -83,7 +83,7 @@ test("holding a drag near the board's edge scrolls it", async ({ board: page }) 
   await page.keyboard.up("Alt");
 });
 
-test("a search match in a collapsed lane opens the lane and scrolls to the card", async ({ board: page }) => {
+test("a search match in a collapsed lane opens the lane and scrolls to the card", async ({ page }) => {
   await page.setViewportSize({ width: 700, height: 420 });
   await laneEl(page, "X").locator(".lane-head").click();
   await expect(laneEl(page, "X")).toHaveClass(/collapsed/);
@@ -97,7 +97,7 @@ test("a search match in a collapsed lane opens the lane and scrolls to the card"
   await expect(page.getByText("1/1")).toBeVisible();
 });
 
-test("hovering a card shows its tip, kept inside the window", async ({ board: page }) => {
+test("hovering a card shows its tip, kept inside the window", async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 600 });
   await card(page, "ENG-108").hover();
 
@@ -121,12 +121,12 @@ test("hovering a card shows its tip, kept inside the window", async ({ board: pa
   expect(box.y + box.height).toBeLessThanOrEqual(600 - 8 + 1);
 });
 
-test("refresh in demo mode calls no tracker and reports up to date", async ({ board: page }) => {
+test("refresh in demo mode calls no tracker and reports up to date", async ({ page }) => {
   await page.getByLabel("Refresh").click();
   await expect(page.getByText("Up to date")).toBeVisible();
 });
 
-test("the closed settings panel covers no card", async ({ board: page }) => {
+test("the closed settings panel covers no card", async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 600 });
 
   const covered = await page.evaluate(() =>
@@ -144,7 +144,7 @@ test("the closed settings panel covers no card", async ({ board: page }) => {
   expect(covered).toEqual([]);
 });
 
-test("a drop in the empty space at the end of a lane puts the card last", async ({ board: page }) => {
+test("a drop in the empty space at the end of a lane puts the card last", async ({ page }) => {
   await grab(page, "ENG-160");
   const lane = (await laneEl(page, "A").boundingBox())!;
   // Far right of lane A, where the closed settings panel used to sit.
@@ -153,7 +153,7 @@ test("a drop in the empty space at the end of a lane puts the card last", async 
   await expect.poll(() => laneIds(page, "A")).toEqual(["ENG-101", "ENG-108", "ENG-112", "ENG-115", "ENG-160"]);
 });
 
-test("the settings panel opens and its switches still work", async ({ board: page }) => {
+test("the settings panel opens and its switches still work", async ({ page }) => {
   await page.getByLabel("Settings").click();
   await page.getByLabel("in-lane blockers: on").click();
 
