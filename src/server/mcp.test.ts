@@ -31,7 +31,8 @@ beforeEach(async () => {
   await client.connect(clientSide);
 });
 
-afterEach(() => client.close());
+// client is unset if beforeEach failed first; that failure is the one to report.
+afterEach(() => client?.close());
 
 type Reply = { content: { type: string; text: string }[]; isError?: boolean };
 const call = async (name: string, args: Record<string, unknown> = {}) => (await client.callTool({ name, arguments: args })) as Reply;
