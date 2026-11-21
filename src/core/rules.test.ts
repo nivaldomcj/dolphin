@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { pinMatches } from "./rules";
+import { pinMatches, readRules, writeRules } from "./rules";
 
 test("a pin with neither kind nor app matches nothing", () => {
   expect(pinMatches({ lane: "A", label: "x" }, "release", "billing")).toBe(false);
@@ -25,4 +25,14 @@ test("a pin with both needs both to match", () => {
   expect(pinMatches(pin, "release", "billing")).toBe(true);
   expect(pinMatches(pin, "release", "auth")).toBe(false);
   expect(pinMatches(pin, "bug", "billing")).toBe(false);
+});
+
+test("writeRules replaces only the parts it is given", async () => {
+  await writeRules({ text: "", pins: [{ lane: "A", kind: "release", label: "release" }] });
+
+  await writeRules({ text: "- one rule" });
+  expect(await readRules()).toEqual({ text: "- one rule", pins: [{ lane: "A", kind: "release", label: "release" }] });
+
+  await writeRules({ pins: [] });
+  expect(await readRules()).toEqual({ text: "- one rule", pins: [] });
 });

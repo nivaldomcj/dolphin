@@ -3,7 +3,7 @@ import { addEdge, moveTask, placeTask, removeEdge, renameLane, reorderLane, setN
 import { readBoard } from "./board";
 import { laneRow, placements, resetDb, taskRow } from "../../test/db";
 import { db } from "../db";
-import { readRules, writeRules } from "./rules";
+import { writeRules } from "./rules";
 
 const lane = async (key: string) => (await readBoard()).lanes.find((l) => l.key === key)?.ids ?? [];
 
@@ -202,15 +202,5 @@ describe("rules", () => {
   test("a pin with only empty matchers matches nothing", async () => {
     await writeRules({ pins: [{ lane: "B", app: "", label: "everything" }] });
     expect((await placeTask("T1", "A")).warnings).toEqual([]);
-  });
-
-  test("writes only the parts given", async () => {
-    await writeRules({ text: "- one rule" });
-    expect(await readRules()).toEqual({
-      text: "- one rule",
-      pins: [{ lane: "A", kind: "release", app: "billing", label: "billing release" }],
-    });
-    await writeRules({ pins: [] });
-    expect(await readRules()).toEqual({ text: "- one rule", pins: [] });
   });
 });
