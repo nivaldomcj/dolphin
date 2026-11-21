@@ -1,10 +1,9 @@
 import { db } from "../src/db";
+import { clearBoard } from "../src/core/clear-board";
 import type { LaneTable, TaskTable } from "../src/db/schema";
 
-/** Empties the board tables (settings stay), in an order the foreign keys accept. */
-export async function resetDb(): Promise<void> {
-  for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
-}
+/** Empties the board tables before a test; the lane rules (settings) stay. */
+export const resetDb = (): Promise<void> => clearBoard(db);
 
 type TaskRow = Omit<TaskTable, "closed" | "meta" | "cycle_number" | "cycle_state"> & {
   closed?: number;

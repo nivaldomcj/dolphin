@@ -1,4 +1,5 @@
 import { db } from "../db";
+import { clearBoard } from "../core/clear-board";
 import { writeRules } from "../core/rules";
 
 type Status = [status: string, closed?: boolean];
@@ -54,7 +55,7 @@ const edges: [string, string][] = [
 /** Replaces the board with a made-up one, for screenshots and for trying dolphin without trackers. */
 export async function seedDemo(): Promise<{ lanes: number; tasks: number }> {
   await db.transaction().execute(async (trx) => {
-    for (const table of ["edge", "placement", "task", "lane"] as const) await trx.deleteFrom(table).execute();
+    await clearBoard(trx);
     await trx
       .insertInto("task")
       .values(

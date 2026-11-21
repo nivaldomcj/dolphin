@@ -1,5 +1,6 @@
 import { config } from "../config";
 import { db } from "../db";
+import { clearBoard } from "../core/clear-board";
 import type { Source, TaskMeta } from "../shared/types";
 
 /** A board `data.json` snapshot, as the old board wrote it. */
@@ -65,7 +66,7 @@ export async function importSnapshot(snap: Snapshot, { force = false } = {}): Pr
   if (existing > 0 && !force) throw new BoardNotEmptyError(existing);
 
   await db.transaction().execute(async (trx) => {
-    for (const table of ["edge", "placement", "task", "lane"] as const) await trx.deleteFrom(table).execute();
+    await clearBoard(trx);
 
     for (const [id, t] of Object.entries(snap.tasks)) {
       const { title, status, url, closed, source: given, ...meta } = t;
