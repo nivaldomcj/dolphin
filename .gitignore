@@ -12,3 +12,5 @@ data*.json
 # Your own settings: project names, the denylist. Copy dolphin.config.example.ts.
 dolphin.config.ts
 .private
+test-results/
+playwright-report/
