@@ -38,6 +38,7 @@ export function Tip({ task: t, x, y, waitsFor, blocks }: Props) {
       <br />
       <span class="k">App:</span> {t.app ?? "-"}
       {t.project && (<> · <span class="k">Project:</span> {t.project}</>)}
+      {t.cycle && (<> · <span class="k">Cycle:</span> {t.cycle.number}{t.cycle.state !== "current" && ` (${t.cycle.state})`}</>)}
       {t.parent && (<> · <span class="k">Parent:</span> {t.parent}</>)}
       <br />
       {waitsFor.length > 0 && (<><span class="k">Waits for:</span> {waitsFor.join(", ")}<br /></>)}

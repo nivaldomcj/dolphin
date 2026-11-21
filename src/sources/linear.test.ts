@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, expect, spyOn, test } from "bun:test";
-import { fetchLinear } from "./linear";
+import { fetchLinear, toCycle } from "./linear";
 
 const savedKey = Bun.env.LINEAR_API_KEY;
 beforeAll(() => {
@@ -97,4 +97,23 @@ test("a failing assigned page keeps the confirmed lookups and reports the error,
 test("a failure before anything is confirmed still fails the whole fetch", async () => {
   mockLinear([{ status: 500, body: { errors: [{ message: "boom" }] } }]);
   expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 500: boom");
+});
+
+const flags = { isActive: false, isNext: false, isPast: false, isFuture: false, completedAt: null };
+
+test("maps Linear's cycle flags to one state", () => {
+  expect(toCycle(null)).toBeNull();
+  expect(toCycle({ ...flags, number: 41, isActive: true })).toEqual({ number: 41, state: "current" });
+  // The next cycle is also flagged as future.
+  expect(toCycle({ ...flags, number: 42, isNext: true, isFuture: true })).toEqual({ number: 42, state: "next" });
+  expect(toCycle({ ...flags, number: 43, isFuture: true })).toEqual({ number: 43, state: "future" });
+  expect(toCycle({ ...flags, number: 40, isPast: true, completedAt: "2026-11-16T00:05:46.868Z" })).toEqual({ number: 40, state: "past" });
+});
+
+test("a cycle completed before its scheduled end is past, not future", () => {
+  expect(toCycle({ ...flags, number: 41, completedAt: "2026-11-25T12:00:00.000Z" })).toEqual({ number: 41, state: "past" });
+});
+
+test("a cycle no flag places is past", () => {
+  expect(toCycle({ ...flags, number: 7 })).toEqual({ number: 7, state: "past" });
 });

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { Board } from "../../types";
+import { type Hide, isHidden } from "../visibility";
 
 /**
  * Search state: the query, the matching task ids, and which match is current. Matches are in board
  * order, so stepping walks lane by lane, left to right.
  */
-export function useSearch(board: Board | null, hideClosed = false) {
+export function useSearch(board: Board | null, hide: Hide = { closed: false, otherCycles: false }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   /** The current match by id, not by place: a drag and drop reorders the matches but keeps this one current. */
@@ -17,9 +18,9 @@ export function useSearch(board: Board | null, hideClosed = false) {
     const q = query.trim().toLowerCase();
     if (!q || !board) return null;
     const match = (s?: string | null) => (s ?? "").toLowerCase().includes(q);
-    const visible = Object.values(board.tasks).filter((t) => !(hideClosed && t.closed));
+    const visible = Object.values(board.tasks).filter((t) => !isHidden(t, hide));
     return new Set(visible.filter((t) => match(t.id) || match(t.title) || match(t.short) || match(t.app)).map((t) => t.id));
-  }, [query, board, hideClosed]);
+  }, [query, board, hide.closed, hide.otherCycles]);
 
   const list = useMemo(() => (hits && board ? board.lanes.flatMap((l) => l.ids).filter((id) => hits.has(id)) : []), [hits, board]);
 

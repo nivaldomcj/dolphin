@@ -28,6 +28,10 @@ export interface TaskTable {
   closed: Generated<number>;
   /** JSON of `TaskMeta`: the fields the arrangement owns. */
   meta: Generated<string>;
+  /** The tracker's cycle number; null when the task has no cycle. */
+  cycle_number: Generated<number | null>;
+  /** A `CycleState`; null when the task has no cycle. */
+  cycle_state: Generated<string | null>;
 }
 
 export interface PlacementTable {

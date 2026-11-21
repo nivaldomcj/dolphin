@@ -9,6 +9,7 @@ export function useDisplay() {
   const [inLane, setInLane] = usePref("inLane", false);
   const [legend, setLegend] = usePref("legend", false);
   const [completed, setCompleted] = usePref("completed", true);
+  const [otherCycles, setOtherCycles] = usePref("otherCycles", true);
   const [privacy, setPrivacy] = usePref("privacy", false);
   const [stored, setTheme] = useStringPref("theme", "system");
   const theme: Theme = isTheme(stored) ? stored : "system";
@@ -35,6 +36,8 @@ export function useDisplay() {
     onLegend: setLegend,
     completed,
     onCompleted: setCompleted,
+    otherCycles,
+    onOtherCycles: setOtherCycles,
     privacy,
     onPrivacy: setPrivacy,
   };
