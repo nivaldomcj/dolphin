@@ -17,7 +17,7 @@
     "typecheck": "bun check",
     "test": "bun test",
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
-    "lint": "biome check .",
+    "lint": "biome check --error-on-warnings .",
     "lint:fix": "biome check --write ."
   },
   "dependencies": {

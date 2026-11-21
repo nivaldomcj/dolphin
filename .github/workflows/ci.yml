@@ -28,7 +28,7 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
       # Read-only lint and format check, with GitHub annotations on the changed lines.
-      - run: bunx biome ci .
+      - run: bunx biome ci --error-on-warnings .
       - run: bun run typecheck
       - run: bun test
 

@@ -8,5 +8,5 @@ fi
 # Lint and format check on the staged files. Branches without Biome skip it.
 if [ -f node_modules/@biomejs/biome/bin/biome ] && [ -f biome.json ]; then
   # Through Bun: the biome entry is a Node script, and dolphin needs no Node.
-  bun node_modules/@biomejs/biome/bin/biome check --staged --no-errors-on-unmatched --files-ignore-unknown=true
+  bun node_modules/@biomejs/biome/bin/biome check --staged --error-on-warnings --no-errors-on-unmatched --files-ignore-unknown=true
 fi

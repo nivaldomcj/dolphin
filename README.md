@@ -160,7 +160,7 @@ privacy. DaisyUI covers the controls (`btn`, `join`, `dropdown`, `input`, `toast
 ```sh
 bun test           # unit tests, on an in-memory database (test/setup.ts), never on dolphin.db
 bun run test:e2e   # Playwright in your installed Chrome, against a demo board served on port 4791 (needs Node)
-bun run lint       # Biome: lint rules and formatting; bun run lint:fix applies the safe fixes
+bun run lint       # Biome: lint rules and formatting, warnings included; lint:fix applies the safe fixes
 ```
 
 The e2e suite is the one place that needs Node: Playwright's test runner is a Node program, so `bun run test:e2e`
