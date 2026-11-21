@@ -3,7 +3,7 @@ import { backupDaily } from "./backup";
 import { fetchGithub } from "../sources/github";
 import { fetchLinear, type LinearResult } from "../sources/linear";
 import type { Fact } from "../sources/types";
-import type { RefreshSummary, Source } from "../types";
+import type { RefreshSummary, Source } from "../shared/types";
 
 interface Known {
   id: string;

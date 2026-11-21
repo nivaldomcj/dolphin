@@ -8,7 +8,7 @@ import { Search } from "./search";
 import { Settings } from "./settings";
 import { Tip } from "./tip";
 import { NoticeAlert, Toast } from "./toast";
-import { UNPLACED, UNPLACED_LANE } from "../../core/order";
+import { UNPLACED, UNPLACED_LANE } from "../../shared/order";
 import { useBoard } from "../hooks/use-board";
 import { useCollapsedLanes } from "../hooks/use-collapsed-lanes";
 import { useDisplay } from "../hooks/use-display";

@@ -1,6 +1,6 @@
 import type { RefObject } from "preact";
 import { useLayoutEffect, useState } from "preact/hooks";
-import type { Board } from "../../types";
+import type { Board } from "../../shared/types";
 
 interface Box {
   l: number;

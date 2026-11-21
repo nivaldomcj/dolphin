@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { act, renderHook, waitFor } from "@testing-library/preact";
 import { useState } from "preact/hooks";
-import type { Board } from "../../types";
+import type { Board } from "../../shared/types";
 import { board, lane } from "../test-board";
 import { useDom } from "../test-dom";
 import { useMove } from "./use-move";

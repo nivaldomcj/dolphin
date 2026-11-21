@@ -1,6 +1,6 @@
 import type { RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
-import type { Board } from "../../types";
+import type { Board } from "../../shared/types";
 import { applyMove, mentions, type Target, targetAt } from "../move";
 import { type Notice, useAutoHide } from "../components/toast";
 

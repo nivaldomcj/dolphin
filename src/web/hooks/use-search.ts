@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
-import type { Board } from "../../types";
+import type { Board } from "../../shared/types";
 import { type Hide, isHidden } from "../visibility";
 
 /**

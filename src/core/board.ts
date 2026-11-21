@@ -1,7 +1,7 @@
 import { toneOf } from "../config";
 import { db } from "../db";
-import { UNPLACED } from "./order";
-import { CYCLE_STATES, type Board, type Cycle, type CycleState, type Task, type TaskMeta } from "../types";
+import { UNPLACED } from "../shared/order";
+import { CYCLE_STATES, type Board, type Cycle, type CycleState, type Task, type TaskMeta } from "../shared/types";
 
 /** The stored cycle columns as a `Cycle`, or null when either is missing or the state is unknown. */
 const cycleOf = (n: number | null, s: string | null): Cycle | null =>

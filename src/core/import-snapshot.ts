@@ -1,6 +1,6 @@
 import { config } from "../config";
 import { db } from "../db";
-import type { Source, TaskMeta } from "../types";
+import type { Source, TaskMeta } from "../shared/types";
 
 /** A board `data.json` snapshot, as the old board wrote it. */
 export interface Snapshot {

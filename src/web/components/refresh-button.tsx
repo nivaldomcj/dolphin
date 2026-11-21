@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import type { Board, RefreshSummary } from "../../types";
+import type { Board, RefreshSummary } from "../../shared/types";
 import { type Notice, NoticeAlert, Toast, useAutoHide } from "./toast";
 
 type State = { kind: "busy" } | ({ kind: "done" } & Notice);

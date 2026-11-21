@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import type { Board } from "../../types";
+import type { Board } from "../../shared/types";
 
 /** Which lane each task is in, and the blockers of each task (`up`) and the tasks it blocks (`down`). */
 export interface BoardGraph {

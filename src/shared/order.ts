@@ -1,4 +1,4 @@
-import type { Lane } from "../types";
+import type { Lane } from "./types";
 
 /** The lane `readBoard` shows unplaced open tasks in. It is not stored, so moving a task there unplaces it. */
 export const UNPLACED_LANE = "N";

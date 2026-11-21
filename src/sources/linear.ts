@@ -1,5 +1,5 @@
 import { config } from "../config";
-import type { Cycle } from "../types";
+import type { Cycle } from "../shared/types";
 import type { Fact } from "./types";
 
 const API = "https://api.linear.app/graphql";

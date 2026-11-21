@@ -1,4 +1,4 @@
-import type { Lane as LaneData, Task } from "../../types";
+import type { Lane as LaneData, Task } from "../../shared/types";
 import type { Target } from "../hooks/use-move";
 import { toneFill } from "../status";
 import { type Hide, inOtherCycle, isHidden } from "../visibility";
