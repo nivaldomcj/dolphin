@@ -1,5 +1,5 @@
 import { config } from "../config";
-import type { Cycle } from "../types";
+import type { Cycle } from "../shared/types";
 import type { Fact } from "./types";
 
 const API = "https://api.linear.app/graphql";
@@ -147,7 +147,9 @@ export async function fetchLinear(knownIds: string[], signal?: AbortSignal): Pro
     let after: string | null = null;
     do {
       const cursor: string = after ? `, after: ${JSON.stringify(after)}` : "";
-      const result = await gql<{ viewer: { assignedIssues: { nodes: Issue[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } } } }>(
+      const result = await gql<{
+        viewer: { assignedIssues: { nodes: Issue[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } } };
+      }>(
         key,
         `{ viewer { assignedIssues(first: 100${cursor}, filter: { state: { type: { in: ${JSON.stringify(OPEN_TYPES)} } } }) { nodes { ${FIELDS} } pageInfo { hasNextPage endCursor } } } }`,
         signal,

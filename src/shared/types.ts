@@ -1,4 +1,4 @@
-import type { Tone } from "./define-config";
+import type { Tone } from "../define-config";
 
 /** Where a task's facts come from. A refresh overwrites facts; it never touches the arrangement. */
 export type Source = "linear" | "github";

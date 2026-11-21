@@ -44,10 +44,16 @@ export function NoticeAlert({ notice, tone, sensitive = false, onClose }: Notice
       <div>
         <b>{notice.title}</b>
         {notice.lines.length > 0 && (
-          <ul class={`mt-1 list-disc pl-5 text-xs${sensitive ? " sensitive" : ""}`}>{notice.lines.map((l) => <li key={l}>{l}</li>)}</ul>
+          <ul class={`mt-1 list-disc pl-5 text-xs${sensitive ? " sensitive" : ""}`}>
+            {notice.lines.map((l) => (
+              <li key={l}>{l}</li>
+            ))}
+          </ul>
         )}
       </div>
-      <button type="button" class="btn btn-ghost btn-xs btn-circle" aria-label="Close" onClick={onClose}>✕</button>
+      <button type="button" class="btn btn-ghost btn-xs btn-circle" aria-label="Close" onClick={onClose}>
+        ✕
+      </button>
     </div>
   );
 }

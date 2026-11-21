@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { makeGuard } from "./guard";
 
 const ok = () => new Response("ok");
-const call = (port: number, headers: Record<string, string>) => (makeGuard(() => port)(ok)(new Request("http://x/", { method: "POST", headers })) as Response).status;
+const call = (port: number, headers: Record<string, string>) =>
+  (makeGuard(() => port)(ok)(new Request("http://x/", { method: "POST", headers })) as Response).status;
 
 describe("guard", () => {
   test("allows dolphin's own names on its port, with or without an Origin", () => {

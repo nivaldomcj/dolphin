@@ -55,7 +55,13 @@ export function Search({ open, query, current, total, onToggle, onOpen, onClose,
           {query.trim() && <span class="text-xs text-base-content/60">{total ? `${current + 1}/${total}` : "0"}</span>}
         </label>
       )}
-      <button type="button" class={`tooltip tooltip-bottom btn btn-ghost btn-sm btn-square ${open ? "btn-active" : ""}`} data-tip="Search (⌘F)" aria-label="Search" onClick={onToggle}>
+      <button
+        type="button"
+        class={`tooltip tooltip-bottom btn btn-ghost btn-sm btn-square ${open ? "btn-active" : ""}`}
+        data-tip="Search (⌘F)"
+        aria-label="Search"
+        onClick={onToggle}
+      >
         🔍
       </button>
     </>

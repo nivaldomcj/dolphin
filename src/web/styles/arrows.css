@@ -1,0 +1,10 @@
+/* The SVG overlay that draws sequence lines and blockers. */
+svg.arrows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}

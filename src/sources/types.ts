@@ -1,4 +1,4 @@
-import type { Cycle, Source } from "../types";
+import type { Cycle, Source } from "../shared/types";
 
 /** What a tracker says about one task. A refresh writes only these fields. */
 export interface Fact {

@@ -15,7 +15,10 @@
     "check:private": "bun src/scripts/check-private.ts",
     "prepare": "bun src/scripts/install-hooks.ts",
     "typecheck": "bun check",
-    "test": "bun test"
+    "test": "bun test",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+    "lint": "biome check --error-on-warnings .",
+    "lint:fix": "biome check --write ."
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
@@ -24,9 +27,14 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.8",
+    "@happy-dom/global-registrator": "^21.0.4",
+    "@playwright/test": "^1.65.1",
+    "@testing-library/preact": "^3.2.6",
     "@types/bun": "^1.4.4",
     "bun-plugin-tailwind": "^0.1.2",
     "daisyui": "^5.8.1",
+    "happy-dom": "^21.0.4",
     "tailwindcss": "^4.3.5"
   },
   "license": "MIT"

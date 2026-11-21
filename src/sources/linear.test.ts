@@ -14,14 +14,25 @@ type Reply = { status?: number; body: unknown };
 
 /** Answers the lookup queries with `lookups` in order, then one page of assigned issues (or `assignedReply`). */
 function mockLinear(lookups: Reply[], assigned: unknown[] = [], assignedReply?: Reply) {
-  const replies = [...lookups, assignedReply ?? { body: { data: { viewer: { assignedIssues: { nodes: assigned, pageInfo: { hasNextPage: false, endCursor: null } } } } } }];
+  const replies = [
+    ...lookups,
+    assignedReply ?? {
+      body: { data: { viewer: { assignedIssues: { nodes: assigned, pageInfo: { hasNextPage: false, endCursor: null } } } } },
+    },
+  ];
   return spyOn(globalThis, "fetch").mockImplementation((async () => {
     const r = replies.shift()!;
     return new Response(JSON.stringify(r.body), { status: r.status ?? 200 });
   }) as unknown as typeof fetch);
 }
 
-const issue = (id: string, uuid = `uuid-${id}`) => ({ id: uuid, identifier: id, title: id, url: `https://linear.app/x/${id}`, state: { name: "Todo", type: "unstarted" } });
+const issue = (id: string, uuid = `uuid-${id}`) => ({
+  id: uuid,
+  identifier: id,
+  title: id,
+  url: `https://linear.app/x/${id}`,
+  state: { name: "Todo", type: "unstarted" },
+});
 const notFound = (alias: string) => ({ message: "Entity not found: Issue", path: [alias] });
 
 afterEach(() => {
@@ -29,7 +40,10 @@ afterEach(() => {
 });
 
 test("drops the ids Linear reports not found and asks again for the rest", async () => {
-  const spy = mockLinear([{ status: 400, body: { data: null, errors: [notFound("i1")] } }, { body: { data: { i0: issue("A-1"), i1: issue("A-3") } } }]);
+  const spy = mockLinear([
+    { status: 400, body: { data: null, errors: [notFound("i1")] } },
+    { body: { data: { i0: issue("A-1"), i1: issue("A-3") } } },
+  ]);
 
   const result = await fetchLinear(["A-1", "A-2", "A-3"]);
 
@@ -40,17 +54,17 @@ test("drops the ids Linear reports not found and asks again for the rest", async
 
 test("a not-found error without a usable alias fails instead of guessing or looping", async () => {
   mockLinear([{ status: 400, body: { data: null, errors: [{ message: "Entity not found: Issue" }] } }]);
-  expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400: Entity not found: Issue");
+  await expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400: Entity not found: Issue");
 });
 
 test("an alias outside the batch fails instead of looping", async () => {
   mockLinear([{ status: 400, body: { data: null, errors: [notFound("i9")] } }]);
-  expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400");
+  await expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400");
 });
 
 test("a not-found on a nested field fails instead of closing the issue", async () => {
   mockLinear([{ status: 400, body: { data: null, errors: [{ message: "Entity not found: WorkflowState", path: ["i0", "state"] }] } }]);
-  expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400");
+  await expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400");
 });
 
 test("an issue moved to another team stays under the id the board asked for, without a second card", async () => {
@@ -78,15 +92,14 @@ test("an issue that moves team between the two queries is still one card", async
 
 test("an alias that only looks like one in the batch (i01) fails instead of closing i1", async () => {
   mockLinear([{ status: 400, body: { data: null, errors: [notFound("i01")] } }]);
-  expect(fetchLinear(["A-1", "A-2"])).rejects.toThrow("Linear API 400");
+  await expect(fetchLinear(["A-1", "A-2"])).rejects.toThrow("Linear API 400");
 });
 
 test("a failing assigned page keeps the confirmed lookups and reports the error, closing nothing", async () => {
-  mockLinear(
-    [{ status: 400, body: { data: null, errors: [notFound("i1")] } }, { body: { data: { i0: issue("A-1") } } }],
-    [],
-    { status: 502, body: { errors: [{ message: "Bad gateway" }] } },
-  );
+  mockLinear([{ status: 400, body: { data: null, errors: [notFound("i1")] } }, { body: { data: { i0: issue("A-1") } } }], [], {
+    status: 502,
+    body: { errors: [{ message: "Bad gateway" }] },
+  });
 
   const result = await fetchLinear(["A-1", "A-2"]);
 
@@ -96,7 +109,7 @@ test("a failing assigned page keeps the confirmed lookups and reports the error,
 
 test("a failure before anything is confirmed still fails the whole fetch", async () => {
   mockLinear([{ status: 500, body: { errors: [{ message: "boom" }] } }]);
-  expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 500: boom");
+  await expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 500: boom");
 });
 
 const flags = { isActive: false, isNext: false, isPast: false, isFuture: false, completedAt: null };

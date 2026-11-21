@@ -1,0 +1,40 @@
+/* The page frame: the window, the scroller and the board, and the empty-board message. */
+html,
+body,
+#app {
+  height: 100%;
+}
+/* Only the board scrolls: an overlay past the window edge (a tooltip) must not add a page scrollbar. */
+html,
+body {
+  overflow: hidden;
+}
+body {
+  font-size: 14px;
+  line-height: 1.4;
+  background: var(--bg);
+  color: var(--fg);
+}
+#app {
+  display: flex;
+  flex-direction: column;
+}
+
+.scroller {
+  flex: 1;
+  overflow: auto;
+}
+.board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 100%;
+  width: max-content;
+  min-height: 100%;
+  background: var(--board-bg);
+}
+
+.empty {
+  padding: 32px;
+  color: var(--muted);
+}

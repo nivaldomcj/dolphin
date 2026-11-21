@@ -1,0 +1,22 @@
+@import "tailwindcss";
+/* The board's own look, one file per area, unlayered so it wins over Tailwind's layers. */
+@import "./tokens.css";
+@import "./layout.css";
+@import "./legend.css";
+@import "./lanes.css";
+@import "./cards.css";
+@import "./arrows.css";
+@import "./tip.css";
+@import "./privacy.css";
+@plugin "daisyui" {
+  themes:
+    light --default,
+    dark --prefersdark;
+}
+
+/* Tooltips wait a moment before showing, so moving the pointer across the buttons does not flash them. */
+.tooltip:hover > .tooltip-content,
+.tooltip:hover[data-tip]::before,
+.tooltip:hover::after {
+  transition-delay: 400ms;
+}

@@ -1,4 +1,4 @@
-import type { Task } from "../types";
+import type { Task } from "../../shared/types";
 
 /** Which tasks the display settings hide. A hidden card keeps its position number, so it still matches the MCP. */
 export interface Hide {

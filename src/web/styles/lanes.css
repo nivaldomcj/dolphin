@@ -1,0 +1,71 @@
+/* Lanes and their headers. */
+.lane {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--line);
+  background: var(--lane-bg);
+}
+/* The header is a button: it takes the page font and color, then its own weight (font resets font-weight). */
+.lane-head {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 190px;
+  min-width: 190px;
+  padding: 10px 12px;
+  border-right: 1px solid var(--line);
+  background: var(--lane-head);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.lane:first-child {
+  border-top: 0;
+}
+.lane-head small {
+  font-weight: 400;
+  color: var(--muted);
+}
+.lane-head:hover {
+  filter: brightness(0.96);
+}
+/* A collapsed lane keeps only its header line; the other lanes share the freed height. */
+.lane.collapsed {
+  flex: 0 0 auto;
+}
+.lane.collapsed .lane-head {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+/*
+ * Dark mode: lane colors come from the data as pastels. Keep each hue but at a dark lightness and low chroma, so a
+ * warm hue reads as a tinted grey rather than brown. These selectors outrank the base rules, so their place does not
+ * matter.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lane {
+    background: oklch(from var(--lane-head) 0.225 calc(c * 0.28) h);
+  }
+  :root:not([data-theme="light"]) .lane-head {
+    background: oklch(from var(--lane-head) 0.27 calc(c * 0.42) h);
+  }
+  :root:not([data-theme="light"]) .lane-head:hover {
+    filter: brightness(1.12);
+  }
+}
+:root[data-theme="dark"] .lane {
+  background: oklch(from var(--lane-head) 0.225 calc(c * 0.28) h);
+}
+:root[data-theme="dark"] .lane-head {
+  background: oklch(from var(--lane-head) 0.27 calc(c * 0.42) h);
+}
+:root[data-theme="dark"] .lane-head:hover {
+  filter: brightness(1.12);
+}

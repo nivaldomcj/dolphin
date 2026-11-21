@@ -3,7 +3,7 @@ import { backupDaily } from "./backup";
 import { fetchGithub } from "../sources/github";
 import { fetchLinear, type LinearResult } from "../sources/linear";
 import type { Fact } from "../sources/types";
-import type { RefreshSummary, Source } from "../types";
+import type { RefreshSummary, Source } from "../shared/types";
 
 interface Known {
   id: string;
@@ -103,7 +103,8 @@ export function createRefresh(sources: Sources, deadlineMs = DEADLINE_MS): () =>
     const current: Promise<RefreshSummary> = run(sources, deadlineMs).finally(() => {
       if (running === current) running = null;
     });
-    return (running = current);
+    running = current;
+    return current;
   };
   return () => {
     // A queued run is joined first: between one run ending and the queued one starting, `running` is already null.

@@ -1,7 +1,17 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { z } from "zod";
-import { addEdge, checkRules, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask, type ArrangeResult } from "../core/arrange";
+import {
+  addEdge,
+  checkRules,
+  placeTask,
+  removeEdge,
+  renameLane,
+  reorderLane,
+  setNote,
+  unplaceTask,
+  type ArrangeResult,
+} from "../core/arrange";
 import { readBoard } from "../core/board";
 import { refresh } from "../core/refresh";
 import { readRules, writeRules } from "../core/rules";
@@ -31,12 +41,16 @@ const pin = z
   .refine((p) => p.kind !== undefined || p.app !== undefined, "A pin needs `kind`, `app` or both.");
 const laneKey = z.string().describe("Lane key, e.g. A");
 
-function buildServer(): McpServer {
+/** One MCP server with every dolphin tool. Exported for tests, which connect a client to it in memory. */
+export function buildServer(): McpServer {
   const mcp = new McpServer({ name: "dolphin", version: "0.3.0" });
 
   mcp.registerTool(
     "get_board",
-    { description: "Read the lane rules, every lane with its tasks in order, the dependency edges, and the current rule warnings. Call it before arranging." },
+    {
+      description:
+        "Read the lane rules, every lane with its tasks in order, the dependency edges, and the current rule warnings. Call it before arranging.",
+    },
     async () => reply({ rules: await readRules(), warnings: await checkRules(), ...(await readBoard()) }),
   );
 
@@ -49,7 +63,8 @@ function buildServer(): McpServer {
   mcp.registerTool(
     "set_rules",
     {
-      description: "Replace the rules text, the pins, or both. A part left out stays as it is. Returns the rules and the warnings they now give.",
+      description:
+        "Replace the rules text, the pins, or both. A part left out stays as it is. Returns the rules and the warnings they now give.",
       inputSchema: { text: z.string().optional(), pins: z.array(pin).optional() },
     },
     async ({ text, pins }) => {
@@ -60,7 +75,10 @@ function buildServer(): McpServer {
 
   mcp.registerTool(
     "refresh",
-    { description: "Pull task statuses from Linear and GitHub. Returns the status changes, new unplaced tasks (lane N) and per-source errors." },
+    {
+      description:
+        "Pull task statuses from Linear and GitHub. Returns the status changes, new unplaced tasks (lane N) and per-source errors.",
+    },
     async () => reply(await refresh()),
   );
 

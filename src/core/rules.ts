@@ -22,7 +22,11 @@ async function read<T>(key: string, fallback: T): Promise<T> {
 
 async function write(key: string, value: unknown): Promise<void> {
   const json = JSON.stringify(value);
-  await db.insertInto("setting").values({ key, value: json }).onConflict((oc) => oc.column("key").doUpdateSet({ value: json })).execute();
+  await db
+    .insertInto("setting")
+    .values({ key, value: json })
+    .onConflict((oc) => oc.column("key").doUpdateSet({ value: json }))
+    .execute();
 }
 
 export async function readRules(): Promise<Rules> {

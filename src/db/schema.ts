@@ -1,5 +1,5 @@
 import type { Generated } from "kysely";
-import type { Source } from "../types";
+import type { Source } from "../shared/types";
 
 /** Row types for Kysely. Keep them in step with the migrations in `./migrations`. */
 export interface DB {

@@ -1,4 +1,3 @@
-import { render } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { Arrows } from "./components/arrows";
 import { Title } from "./components/easter-egg";
@@ -9,14 +8,15 @@ import { Search } from "./components/search";
 import { Settings } from "./components/settings";
 import { Tip } from "./components/tip";
 import { NoticeAlert, Toast } from "./components/toast";
-import { UNPLACED, UNPLACED_LANE } from "../core/order";
+import { UNPLACED, UNPLACED_LANE } from "../shared/order";
 import { useBoard } from "./hooks/use-board";
 import { useCollapsedLanes } from "./hooks/use-collapsed-lanes";
 import { useDisplay } from "./hooks/use-display";
 import { useMove } from "./hooks/use-move";
 import { useSearch } from "./hooks/use-search";
 
-function App() {
+/** The whole page: header, board, hover card, drag ghost and toasts. */
+export function App() {
   const { board, setBoard, error, graph } = useBoard();
   const display = useDisplay();
   const lanes = useCollapsedLanes();
@@ -41,7 +41,9 @@ function App() {
     const id = search.current;
     if (!id) return;
     const scroll = () =>
-      boardRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      boardRef.current
+        ?.querySelector(`[data-id="${CSS.escape(id)}"]`)
+        ?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     const key = laneOf.get(id);
     if (key && lanesRef.current.collapsed.has(key)) {
       lanesRef.current.setCollapsed(key, false);
@@ -84,7 +86,13 @@ function App() {
         {board && board.lanes.length === 0 && <p class="empty">The board is empty. Run `bun run import &lt;data.json&gt;`.</p>}
         {board && (
           <div class="board" ref={boardRef}>
-            <Arrows root={boardRef} board={board} laneOf={laneOf} showInLane={display.inLane} layoutKey={`${display.titles}|${display.completed}|${display.otherCycles}|${lanes.key}|${extraN}`} />
+            <Arrows
+              root={boardRef}
+              board={board}
+              laneOf={laneOf}
+              showInLane={display.inLane}
+              layoutKey={`${display.titles}|${display.completed}|${display.otherCycles}|${lanes.key}|${extraN}`}
+            />
             {shownLanes.map((lane) => (
               <Lane
                 key={lane.key}
@@ -108,7 +116,9 @@ function App() {
         )}
       </div>
       {display.legend && <Legend />}
-      {hover && focused && <Tip task={focused} x={hover.x} y={hover.y} waitsFor={up.get(hover.id) ?? []} blocks={down.get(hover.id) ?? []} />}
+      {hover && focused && (
+        <Tip task={focused} x={hover.x} y={hover.y} waitsFor={up.get(hover.id) ?? []} blocks={down.get(hover.id) ?? []} />
+      )}
       {move.drag && (
         <div class="drag-ghost" style={{ left: `${move.drag.x + 14}px`, top: `${move.drag.y + 12}px` }}>
           {move.drag.id}
@@ -122,5 +132,3 @@ function App() {
     </>
   );
 }
-
-render(<App />, document.getElementById("app")!);

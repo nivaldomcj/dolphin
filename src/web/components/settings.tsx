@@ -1,4 +1,4 @@
-import { THEMES, type Theme } from "../theme";
+import { THEMES, type Theme } from "../lib/theme";
 interface Option<T extends string> {
   value: T;
   label: string;
@@ -25,8 +25,19 @@ function Segmented<T extends string>({ value, options, onChange }: { value: T; o
   );
 }
 
-
-function Switch({ label, value, onChange, on = "🟢", off = "🔴" }: { label: string; value: boolean; onChange: (v: boolean) => void; on?: string; off?: string }) {
+function Switch({
+  label,
+  value,
+  onChange,
+  on = "🟢",
+  off = "🔴",
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+  on?: string;
+  off?: string;
+}) {
   return (
     <>
       <span>{label}</span>
@@ -41,7 +52,6 @@ function Switch({ label, value, onChange, on = "🟢", off = "🔴" }: { label: 
     </>
   );
 }
-
 
 interface Props {
   theme: Theme;
@@ -66,21 +76,33 @@ interface Props {
 export function Settings(p: Props) {
   return (
     <div class="dropdown dropdown-end">
-      <div tabIndex={0} role="button" class="tooltip tooltip-left btn btn-ghost btn-sm btn-square" data-tip="Settings" aria-label="Settings">🎛️</div>
-      <div tabIndex={0} class="dropdown-content z-30 mt-2 grid whitespace-nowrap grid-cols-[auto_auto] items-center gap-x-6 gap-y-2 rounded-box bg-base-100 p-4 text-sm shadow-lg ring-1 ring-base-300">
-        <span>theme</span>
-        <Segmented
-          value={p.theme}
-          onChange={p.onTheme}
-          options={[...THEMES]}
-        />
-        <Switch label="titles" value={p.titles} onChange={p.onTitles} />
-        <Switch label="positions" value={p.positions} onChange={p.onPositions} />
-        <Switch label="in-lane blockers" value={p.inLane} onChange={p.onInLane} />
-        <Switch label="completed" value={p.completed} onChange={p.onCompleted} />
-        <Switch label="other cycles" value={p.otherCycles} onChange={p.onOtherCycles} />
-        <Switch label="legend" value={p.legend} onChange={p.onLegend} />
-        <Switch label="privacy" value={p.privacy} onChange={p.onPrivacy} on="🙈" off="🙉" />
+      {/* biome-ignore lint/a11y/useSemanticElements: DaisyUI's focus dropdown needs a focusable div; Safari does not focus a <button> on click. */}
+      <div
+        tabIndex={0}
+        role="button"
+        class="tooltip tooltip-left btn btn-ghost btn-sm btn-square"
+        data-tip="Settings"
+        aria-label="Settings"
+      >
+        🎛️
+      </div>
+      {/*
+        No display utility on .dropdown-content: DaisyUI closes it with `display: none`, and a utility like `grid` would
+        win over that, leaving the closed panel invisible but still taking clicks and drops over the board.
+      */}
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: focusable so a click inside keeps the dropdown open (DaisyUI focus dropdown). */}
+      <div tabIndex={0} class="dropdown-content z-30 mt-2 rounded-box bg-base-100 shadow-lg ring-1 ring-base-300">
+        <div class="grid whitespace-nowrap grid-cols-[auto_auto] items-center gap-x-6 gap-y-2 p-4 text-sm">
+          <span>theme</span>
+          <Segmented value={p.theme} onChange={p.onTheme} options={[...THEMES]} />
+          <Switch label="titles" value={p.titles} onChange={p.onTitles} />
+          <Switch label="positions" value={p.positions} onChange={p.onPositions} />
+          <Switch label="in-lane blockers" value={p.inLane} onChange={p.onInLane} />
+          <Switch label="completed" value={p.completed} onChange={p.onCompleted} />
+          <Switch label="other cycles" value={p.otherCycles} onChange={p.onOtherCycles} />
+          <Switch label="legend" value={p.legend} onChange={p.onLegend} />
+          <Switch label="privacy" value={p.privacy} onChange={p.onPrivacy} on="🙈" off="🙉" />
+        </div>
       </div>
     </div>
   );

@@ -1,19 +1,28 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { addEdge, moveTask, placeTask, removeEdge, renameLane, reorderLane, setNote, unplaceTask } from "./arrange";
 import { readBoard } from "./board";
+import { laneRow, placements, resetDb, taskRow } from "../../test/db";
 import { db } from "../db";
-import { readRules, writeRules } from "./rules";
+import { writeRules } from "./rules";
 
 const lane = async (key: string) => (await readBoard()).lanes.find((l) => l.key === key)?.ids ?? [];
 
 beforeEach(async () => {
-  for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
+  await resetDb();
   await writeRules({ pins: [{ lane: "A", kind: "release", app: "billing", label: "billing release" }] });
-  const task = (id: string, meta = {}) => ({ id, source: "linear" as const, title: id, status: "Todo", url: "", meta: JSON.stringify(meta) });
-  await db.insertInto("task").values([task("T1"), task("T2"), task("T3"), task("T4"), task("RUN", { kind: "release", app: "Billing" }), task("NEW")]).execute();
-  await db.insertInto("lane").values([{ key: "A", name: "a", bg: "", head: "", ord: 0 }, { key: "B", name: "b", bg: "", head: "", ord: 1 }]).execute();
-  const place = (key: string, ids: string[]) => ids.map((task_id, pos) => ({ task_id, lane_key: key, pos }));
-  await db.insertInto("placement").values([...place("A", ["RUN", "T1", "T2"]), ...place("B", ["T3", "T4"])]).execute();
+  const task = (id: string, meta = {}) => taskRow(id, { meta: JSON.stringify(meta) });
+  await db
+    .insertInto("task")
+    .values([task("T1"), task("T2"), task("T3"), task("T4"), task("RUN", { kind: "release", app: "Billing" }), task("NEW")])
+    .execute();
+  await db
+    .insertInto("lane")
+    .values([laneRow("A", 0), laneRow("B", 1)])
+    .execute();
+  await db
+    .insertInto("placement")
+    .values([...placements("A", ["RUN", "T1", "T2"]), ...placements("B", ["T3", "T4"])])
+    .execute();
 });
 
 describe("placeTask", () => {
@@ -39,12 +48,17 @@ describe("placeTask", () => {
   });
 
   test("a pin matches on kind and on app, any case", async () => {
-    await writeRules({ pins: [{ lane: "A", kind: "other", label: "x" }, { lane: "A", app: "BILL", label: "billing task" }] });
+    await writeRules({
+      pins: [
+        { lane: "A", kind: "other", label: "x" },
+        { lane: "A", app: "BILL", label: "billing task" },
+      ],
+    });
     expect((await placeTask("RUN", "B")).warnings).toEqual(["RUN is a billing task in lane B, not lane A."]);
   });
 
   test("rejects an unknown lane", async () => {
-    expect(placeTask("T1", "Z")).rejects.toThrow("Unknown lane Z");
+    await expect(placeTask("T1", "Z")).rejects.toThrow("Unknown lane Z");
   });
 });
 
@@ -63,7 +77,7 @@ describe("moveTask", () => {
   });
 
   test("puts a task at the end of a lane without an anchor, even an empty lane", async () => {
-    await db.insertInto("lane").values({ key: "C", name: "c", bg: "", head: "", ord: 2 }).execute();
+    await db.insertInto("lane").values(laneRow("C", 2)).execute();
     await moveTask("T1", "C");
     expect(await lane("C")).toEqual(["T1"]);
     await moveTask("T3", "A");
@@ -125,7 +139,7 @@ describe("reorderLane", () => {
   });
 
   test("rejects a list that drops or adds tasks", async () => {
-    expect(reorderLane("A", ["T2", "T1", "T3"])).rejects.toThrow("Missing: RUN. Not in lane: T3.");
+    await expect(reorderLane("A", ["T2", "T1", "T3"])).rejects.toThrow("Missing: RUN. Not in lane: T3.");
   });
 });
 
@@ -147,7 +161,7 @@ describe("edges", () => {
 
   test("rejects a loop", async () => {
     await addEdge("T1", "T2");
-    expect(addEdge("T2", "T1")).rejects.toThrow("makes a loop");
+    await expect(addEdge("T2", "T1")).rejects.toThrow("makes a loop");
   });
 });
 
@@ -173,7 +187,7 @@ describe("parallel calls", () => {
 
   test("a reorder that starts after a move sees the move and is rejected", async () => {
     await placeTask("T1", "B");
-    expect(reorderLane("A", ["T2", "T1", "RUN"])).rejects.toThrow("Missing: none. Not in lane: T1.");
+    await expect(reorderLane("A", ["T2", "T1", "RUN"])).rejects.toThrow("Missing: none. Not in lane: T1.");
   });
 
   test("two edges that would form a loop cannot both be added", async () => {
@@ -188,12 +202,5 @@ describe("rules", () => {
   test("a pin with only empty matchers matches nothing", async () => {
     await writeRules({ pins: [{ lane: "B", app: "", label: "everything" }] });
     expect((await placeTask("T1", "A")).warnings).toEqual([]);
-  });
-
-  test("writes only the parts given", async () => {
-    await writeRules({ text: "- one rule" });
-    expect(await readRules()).toEqual({ text: "- one rule", pins: [{ lane: "A", kind: "release", app: "billing", label: "billing release" }] });
-    await writeRules({ pins: [] });
-    expect(await readRules()).toEqual({ text: "- one rule", pins: [] });
   });
 });

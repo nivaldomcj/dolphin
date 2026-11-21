@@ -24,22 +24,16 @@ const jq = (p: GithubProject) => `.data.organization.projectV2.items.nodes[]
   | {number: .content.number, title: .content.title, url: .content.url, status: (.status.name // "Backlog")}
   | @json`;
 
-interface Item { number: number; title: string; url: string; status: string }
+interface Item {
+  number: number;
+  title: string;
+  url: string;
+  status: string;
+}
 
-/**
- * Lists the configured project's issues assigned to the user, through the `gh` CLI and its existing login. Takes
- * about 9 s. Without a `github` block in the config it returns nothing.
- */
-export async function fetchGithub(signal?: AbortSignal): Promise<Fact[]> {
-  const project = config.github;
-  if (!project) return [];
+/** The facts in `gh`'s output, one JSON line per issue. A status outside the project's `open` list closes the task. */
+export function toFacts(stdout: string, project: GithubProject): Fact[] {
   const open = new Set(project.open);
-  // An abort (the refresh deadline) kills the gh process.
-  const gh = Bun.spawn(["gh", "api", "graphql", "--paginate", "-f", `query=${query(project)}`, "--jq", jq(project)], { stdout: "pipe", stderr: "pipe", signal });
-  const [stdout, stderr, exitCode] = await Promise.all([new Response(gh.stdout).text(), new Response(gh.stderr).text(), gh.exited]);
-  signal?.throwIfAborted();
-  if (exitCode !== 0) throw new Error(`gh api graphql failed: ${stderr.trim()}`);
-
   return stdout
     .split("\n")
     .filter(Boolean)
@@ -52,4 +46,23 @@ export async function fetchGithub(signal?: AbortSignal): Promise<Fact[]> {
       url: i.url,
       closed: !open.has(i.status),
     }));
+}
+
+/**
+ * Lists the configured project's issues assigned to the user, through the `gh` CLI and its existing login. Takes
+ * about 9 s. Without a `github` block in the config it returns nothing. `bin` is the `gh` to run.
+ */
+export async function fetchGithub(signal?: AbortSignal, bin = "gh"): Promise<Fact[]> {
+  const project = config.github;
+  if (!project) return [];
+  // An abort (the refresh deadline) kills the gh process.
+  const gh = Bun.spawn([bin, "api", "graphql", "--paginate", "-f", `query=${query(project)}`, "--jq", jq(project)], {
+    stdout: "pipe",
+    stderr: "pipe",
+    signal,
+  });
+  const [stdout, stderr, exitCode] = await Promise.all([new Response(gh.stdout).text(), new Response(gh.stderr).text(), gh.exited]);
+  signal?.throwIfAborted();
+  if (exitCode !== 0) throw new Error(`gh api graphql failed: ${stderr.trim()}`);
+  return toFacts(stdout, project);
 }

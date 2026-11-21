@@ -1,10 +1,19 @@
 import { beforeEach, expect, test } from "bun:test";
+import { OFFLINE, withConfig } from "../../test/config";
+import { laneRow, placements, resetDb, taskRow } from "../../test/db";
 import { db } from "../db";
 import type { Fact } from "../sources/types";
 import { readBoard } from "./board";
-import { createRefresh, NOT_FOUND } from "./refresh";
+import { createRefresh, NOT_FOUND, refresh as refreshNow } from "./refresh";
 
-const fact = (id: string, status: string, closed = false): Fact => ({ id, source: "linear", title: `${id} title`, status, url: `https://x/${id}`, closed });
+const fact = (id: string, status: string, closed = false): Fact => ({
+  id,
+  source: "linear",
+  title: `${id} title`,
+  status,
+  url: `https://x/${id}`,
+  closed,
+});
 
 let linear: () => Promise<{ facts: Fact[]; missing: string[]; error?: string }> = async () => ({ facts: [], missing: [] });
 // Fakes for the two trackers; tests reassign them.
@@ -12,16 +21,19 @@ let github: () => Promise<Fact[]> = async () => [];
 const refresh = createRefresh({ fetchLinear: () => linear(), fetchGithub: () => github() });
 
 beforeEach(async () => {
-  for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
-  await db.insertInto("lane").values({ key: "A", name: "a", bg: "", head: "", ord: 0 }).execute();
+  await resetDb();
+  await db.insertInto("lane").values(laneRow("A", 0)).execute();
   await db
     .insertInto("task")
     .values([
-      { id: "L1", source: "linear", title: "L1 title", status: "Todo", url: "https://x/L1", meta: JSON.stringify({ note: "keep me" }) },
-      { id: "G1", source: "github", title: "G1 title", status: "Backlog", url: "https://x/G1", meta: "{}" },
+      taskRow("L1", { title: "L1 title", url: "https://x/L1", meta: JSON.stringify({ note: "keep me" }) }),
+      taskRow("G1", { source: "github", title: "G1 title", status: "Backlog", url: "https://x/G1" }),
     ])
     .execute();
-  await db.insertInto("placement").values([{ task_id: "L1", lane_key: "A", pos: 0 }, { task_id: "G1", lane_key: "A", pos: 1 }]).execute();
+  await db
+    .insertInto("placement")
+    .values(placements("A", ["L1", "G1"]))
+    .execute();
   linear = async () => ({ facts: [], missing: [] });
   github = async () => [];
 });
@@ -53,7 +65,13 @@ test("a failing source leaves its tasks untouched and the other source still app
 });
 
 test("writes the cycle without reporting it as a change, and keeps it when the tracker has no cycles", async () => {
-  linear = async () => ({ facts: [{ ...fact("L1", "Todo"), cycle: { number: 43, state: "next" } }, { ...fact("L2", "Todo"), cycle: null }], missing: [] });
+  linear = async () => ({
+    facts: [
+      { ...fact("L1", "Todo"), cycle: { number: 43, state: "next" } },
+      { ...fact("L2", "Todo"), cycle: null },
+    ],
+    missing: [],
+  });
   github = async () => [{ ...fact("G1", "Backlog"), source: "github" }];
 
   expect(await refresh()).toEqual({ changes: [], added: ["L2"], errors: {} });
@@ -159,5 +177,16 @@ test("partial Linear results apply, with the error reported and nothing closed a
 
   const summary = await refresh();
 
-  expect(summary).toEqual({ changes: [{ id: "L1", from: "Todo", to: "In Progress" }], added: [], errors: { linear: "Linear API 502: no data" } });
+  expect(summary).toEqual({
+    changes: [{ id: "L1", from: "Todo", to: "In Progress" }],
+    added: [],
+    errors: { linear: "Linear API 502: no data" },
+  });
+});
+
+test("the exported refresh reads the configured trackers and reports nothing when both are off", async () => {
+  await withConfig(OFFLINE, async () => {
+    expect(await refreshNow()).toEqual({ changes: [], added: [], errors: {} });
+    expect((await readBoard()).tasks.L1?.status).toBe("Todo");
+  });
 });

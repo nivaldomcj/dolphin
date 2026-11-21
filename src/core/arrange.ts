@@ -1,9 +1,9 @@
 import { type Kysely, sql } from "kysely";
 import { db } from "../db";
 import type { DB } from "../db/schema";
-import { type Anchor, insertNear, UNPLACED_LANE } from "./order";
+import { type Anchor, insertNear, UNPLACED_LANE } from "../shared/order";
 import { pinMatches, readRules } from "./rules";
-import type { TaskMeta } from "../types";
+import type { TaskMeta } from "../shared/types";
 
 /** Every write returns what it did, plus the rule warnings for the whole board after the write. */
 export interface ArrangeResult {
@@ -14,7 +14,11 @@ export interface ArrangeResult {
 /** The root handle or an open transaction. */
 type Q = Kysely<DB>;
 
-interface Placement { task_id: string; lane_key: string; pos: number }
+interface Placement {
+  task_id: string;
+  lane_key: string;
+  pos: number;
+}
 
 async function laneIds(q: Q, lane: string): Promise<string[]> {
   const rows = await q.selectFrom("placement").select("task_id").where("lane_key", "=", lane).orderBy("pos").execute();
@@ -37,7 +41,10 @@ async function writeLane(q: Q, lane: string, ids: string[]): Promise<void> {
   await q.deleteFrom("placement").where("lane_key", "=", lane).execute();
   if (ids.length === 0) return;
   await q.deleteFrom("placement").where("task_id", "in", ids).execute();
-  await q.insertInto("placement").values(ids.map((task_id, pos) => ({ task_id, lane_key: lane, pos }))).execute();
+  await q
+    .insertInto("placement")
+    .values(ids.map((task_id, pos) => ({ task_id, lane_key: lane, pos })))
+    .execute();
 }
 
 /** Checks the board against the hard rules and returns one line per breach. */
@@ -64,7 +71,8 @@ export async function checkRules(): Promise<string[]> {
   }
 
   for (const { a, b } of await db.selectFrom("edge").select(["a", "b"]).execute()) {
-    const pa = at.get(a), pb = at.get(b);
+    const pa = at.get(a),
+      pb = at.get(b);
     if (!pa || !pb) continue;
     const where = (p: Placement) => `${p.lane_key}#${p.pos + 1}`;
     if (pa.lane_key === pb.lane_key && pa.pos > pb.pos) {
@@ -130,7 +138,9 @@ export async function reorderLane(lane: string, ids: string[]): Promise<ArrangeR
     const missing = current.filter((id) => !ids.includes(id));
     const extra = ids.filter((id) => !current.includes(id));
     if (missing.length || extra.length || new Set(ids).size !== ids.length) {
-      throw new Error(`Lane ${lane} order must list its ${current.length} tasks once each. Missing: ${missing.join(", ") || "none"}. Not in lane: ${extra.join(", ") || "none"}.`);
+      throw new Error(
+        `Lane ${lane} order must list its ${current.length} tasks once each. Missing: ${missing.join(", ") || "none"}. Not in lane: ${extra.join(", ") || "none"}.`,
+      );
     }
     await writeLane(trx, lane, ids);
   });
@@ -179,7 +189,11 @@ export async function addEdge(blocker: string, blocked: string): Promise<Arrange
   // The loop check and the insert share one transaction, so two parallel calls cannot both pass the check.
   await db.transaction().execute(async (trx) => {
     if (await reaches(trx, blocked, blocker)) throw new Error(`${blocked} already leads to ${blocker}; adding this edge makes a loop.`);
-    await trx.insertInto("edge").values({ a: blocker, b: blocked }).onConflict((oc) => oc.doNothing()).execute();
+    await trx
+      .insertInto("edge")
+      .values({ a: blocker, b: blocked })
+      .onConflict((oc) => oc.doNothing())
+      .execute();
   });
   return result(`${blocker} now blocks ${blocked}.`);
 }
@@ -202,6 +216,10 @@ export async function setNote(id: string, note: string): Promise<ArrangeResult> 
   const meta = JSON.parse(row.meta) as TaskMeta;
   if (note) meta.note = note;
   else delete meta.note;
-  await db.updateTable("task").set({ meta: JSON.stringify(meta) }).where("id", "=", id).execute();
+  await db
+    .updateTable("task")
+    .set({ meta: JSON.stringify(meta) })
+    .where("id", "=", id)
+    .execute();
   return result(note ? `Note set on ${id}.` : `Note removed from ${id}.`);
 }
