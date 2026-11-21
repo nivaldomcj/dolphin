@@ -35,7 +35,7 @@ has lanes it stops unless you add `--force`.
 
 | Part | Choice | Why |
 |---|---|---|
-| Runtime | [Bun](https://bun.sh) and TypeScript | One tool for the server, SQLite, bundling, type checking and tests. No Node, no Vite. |
+| Runtime | [Bun](https://bun.sh) and TypeScript | One tool for the server, SQLite, bundling, type checking and unit tests. No Node to run the app, no Vite. |
 | Scope | Local only, one user, no auth, no hosting | A companion page next to my editor. Keep it simple. |
 | Server | `Bun.serve` routes | Four routes do not need Hono or Elysia. |
 | Page | [Preact](https://preactjs.com) 11 in TSX | Small, with a familiar React-like model to grow into. Bun's HTML import bundles the TSX, so no `htm` and no build step. |
@@ -159,9 +159,12 @@ privacy. DaisyUI covers the controls (`btn`, `join`, `dropdown`, `input`, `toast
 
 ```sh
 bun test           # unit tests, on an in-memory database (test/setup.ts), never on dolphin.db
-bun run test:e2e   # Playwright in your installed Chrome, against a demo board served on port 4791
+bun run test:e2e   # Playwright in your installed Chrome, against a demo board served on port 4791 (needs Node)
 bun run lint       # Biome: lint rules and formatting; bun run lint:fix applies the safe fixes
 ```
+
+The e2e suite is the one place that needs Node: Playwright's test runner is a Node program, so `bun run test:e2e`
+runs it on Node from your PATH (CI runners have it). The app, the unit tests and the hooks need only Bun.
 
 Test files sit next to the module they test. `test/` holds the shared helpers: `resetDb` and row builders for the
 database, `withConfig` and `useConfig` to swap config parts, `useDom` for the page tests, and page-side board builders.
