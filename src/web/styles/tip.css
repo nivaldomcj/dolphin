@@ -19,3 +19,15 @@
 .tip .k {
   color: #b8b8c8;
 }
+
+/* Dark mode: a raised grey card instead of the near-black one. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tip {
+    background: oklch(0.27 0.012 265);
+    border: 1px solid oklch(0.38 0.012 265);
+  }
+}
+:root[data-theme="dark"] .tip {
+  background: oklch(0.27 0.012 265);
+  border: 1px solid oklch(0.38 0.012 265);
+}

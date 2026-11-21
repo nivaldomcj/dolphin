@@ -1,8 +1,5 @@
 @import "tailwindcss";
-/*
- * The board's own look, unlayered so it wins over Tailwind's layers. Keep this order: the dark-theme overrides in
- * lanes.css come before the base card and tip rules on purpose, and win by specificity.
- */
+/* The board's own look, one file per area, unlayered so it wins over Tailwind's layers. */
 @import "./tokens.css";
 @import "./layout.css";
 @import "./legend.css";

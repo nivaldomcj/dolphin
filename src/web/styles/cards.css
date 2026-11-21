@@ -150,3 +150,13 @@ body.moving .card:hover {
 .nopos .card .pos {
   display: none;
 }
+
+/* Dark mode: each card is a raised surface whose border is a lighter shade of its own status fill. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .card {
+    border-color: oklch(from var(--fill, var(--s-todo)) calc(l + 0.16) calc(c * 1.3) h);
+  }
+}
+:root[data-theme="dark"] .card {
+  border-color: oklch(from var(--fill, var(--s-todo)) calc(l + 0.16) calc(c * 1.3) h);
+}

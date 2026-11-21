@@ -22,8 +22,7 @@
     "rules": {
       "preset": "recommended",
       "style": {
-        "noNonNullAssertion": "off",
-        "noDescendingSpecificity": "off"
+        "noNonNullAssertion": "off"
       }
     }
   }

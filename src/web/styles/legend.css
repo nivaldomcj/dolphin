@@ -21,3 +21,13 @@
   vertical-align: 3px;
   margin-right: 4px;
 }
+
+/* Dark mode: the swatches get the same lighter border as the cards they stand for. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sw {
+    border-color: oklch(from var(--fill, var(--s-todo)) calc(l + 0.16) calc(c * 1.3) h);
+  }
+}
+:root[data-theme="dark"] .sw {
+  border-color: oklch(from var(--fill, var(--s-todo)) calc(l + 0.16) calc(c * 1.3) h);
+}

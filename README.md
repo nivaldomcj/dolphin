@@ -150,7 +150,7 @@ Biome on the staged files) and `commit-msg` scans the message. `bun run check:pr
 and DaisyUI, then the board's own look, one file per area: tokens, layout, legend, lanes, cards, arrows, tip and
 privacy. DaisyUI covers the controls (`btn`, `join`, `dropdown`, `input`, `toast`, `alert`, `loading`).
 
-- Keep the import order in `app.css`: the dark-theme overrides in `lanes.css` come before the card and tip rules.
+- Each area's dark-theme overrides sit at the end of its own file.
 - The theme setting sets `data-theme` on `<html>`. DaisyUI and the board styles both read it.
 - Do not name a CSS variable after one DaisyUI uses, such as `--border` or `--size`: the controls break.
 - `bun --hot` does not rebuild the CSS when only a board style file changes. Restart the server.
