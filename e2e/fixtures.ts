@@ -8,7 +8,11 @@ const ROOT = join(import.meta.dirname, "..");
 /** Every test starts from the same demo board, written while the server keeps running. */
 export const test = base.extend<{ board: Page }>({
   board: async ({ page }, use) => {
-    execFileSync("bun", ["src/scripts/seed-demo.ts"], { cwd: ROOT, env: { ...process.env, ...ENV }, stdio: "ignore" });
+    execFileSync("bun", ["src/scripts/seed-demo.ts"], {
+      cwd: ROOT,
+      env: { ...process.env, ...ENV },
+      stdio: ["ignore", "ignore", "inherit"],
+    });
     await page.goto("/");
     await expect(page.locator(".card").first()).toBeVisible();
     await use(page);
