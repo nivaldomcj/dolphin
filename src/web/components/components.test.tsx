@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, jest, mock, spyOn, test } from "bun:test";
 import { act, fireEvent, render, waitFor } from "@testing-library/preact";
-import { board, lane, task } from "../test-board";
-import { useDom } from "../test-dom";
+import { board, lane, task } from "../../../test/board";
+import { useDom } from "../../../test/dom";
 import { Arrows } from "./arrows";
 import { Title } from "./easter-egg";
 import { Lane, type Mark } from "./lane";

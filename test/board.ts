@@ -1,4 +1,4 @@
-import type { Board, Lane, Task } from "../shared/types";
+import type { Board, Lane, Task } from "../src/shared/types";
 
 /** A task for web tests: open, no cycle, "todo" tone, unless `over` says otherwise. */
 export const task = (id: string, over: Partial<Task> = {}): Task => ({

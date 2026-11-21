@@ -1,5 +1,5 @@
 import { useEffect } from "preact/hooks";
-import { isTheme, type Theme } from "../theme";
+import { isTheme, type Theme } from "../lib/theme";
 import { usePref, useStringPref } from "./prefs";
 
 /** The display settings from the 🎛️ menu, kept in localStorage. Theme and privacy are applied to the document. */

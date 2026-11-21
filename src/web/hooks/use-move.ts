@@ -1,10 +1,10 @@
 import type { RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { Board } from "../../shared/types";
-import { applyMove, mentions, type Target, targetAt } from "../move";
+import { applyMove, mentions, type Target, targetAt } from "../lib/move";
 import { type Notice, useAutoHide } from "../components/toast";
 
-export type { Target } from "../move";
+export type { Target } from "../lib/move";
 
 /** A card being moved with Alt + drag, and the pointer that carries it. */
 export interface Drag {

@@ -1,4 +1,4 @@
-import { THEMES, type Theme } from "../theme";
+import { THEMES, type Theme } from "../lib/theme";
 interface Option<T extends string> {
   value: T;
   label: string;

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import type { Board } from "../../shared/types";
-import { type Hide, isHidden } from "../visibility";
+import { type Hide, isHidden } from "../lib/visibility";
 
 /**
  * Search state: the query, the matching task ids, and which match is current. Matches are in board

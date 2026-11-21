@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import { task } from "./test-board";
+import { task } from "../../../test/board";
 import { isTheme } from "./theme";
-import { toneFill } from "./status";
+import { toneFill } from "./tone";
 import { inOtherCycle, isHidden } from "./visibility";
 
 test("only a task planned for a cycle other than the current one is in another cycle", () => {

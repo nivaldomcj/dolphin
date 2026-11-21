@@ -1,7 +1,7 @@
 import type { Lane as LaneData, Task } from "../../shared/types";
 import type { Target } from "../hooks/use-move";
-import { toneFill } from "../status";
-import { type Hide, inOtherCycle, isHidden } from "../visibility";
+import { toneFill } from "../lib/tone";
+import { type Hide, inOtherCycle, isHidden } from "../lib/visibility";
 
 export type Mark = "current" | "hit" | "dim" | "rel-up" | "rel-down" | undefined;
 

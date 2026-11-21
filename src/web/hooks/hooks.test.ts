@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { act, renderHook, waitFor } from "@testing-library/preact";
 import type { Board } from "../../shared/types";
-import { board, lane, task } from "../test-board";
-import { useDom } from "../test-dom";
+import { board, lane, task } from "../../../test/board";
+import { useDom } from "../../../test/dom";
 import { usePref, useStringPref } from "./prefs";
 import { useBoard } from "./use-board";
 import { useCollapsedLanes } from "./use-collapsed-lanes";

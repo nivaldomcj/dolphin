@@ -1,5 +1,5 @@
-import { type Anchor, insertNear, UNPLACED, UNPLACED_LANE } from "../shared/order";
-import type { Board } from "../shared/types";
+import { type Anchor, insertNear, UNPLACED, UNPLACED_LANE } from "../../shared/order";
+import type { Board } from "../../shared/types";
 
 /** Where a dragged card would land: a lane, next to one of its cards or at its end. */
 export interface Target {

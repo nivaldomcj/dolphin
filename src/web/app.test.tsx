@@ -1,8 +1,8 @@
 import { afterEach, beforeAll, expect, spyOn, test } from "bun:test";
 import { fireEvent, render, waitFor } from "@testing-library/preact";
-import type { Board } from "../../shared/types";
-import { board, lane, task } from "../test-board";
-import { useDom } from "../test-dom";
+import type { Board } from "../shared/types";
+import { board, lane, task } from "../../test/board";
+import { useDom } from "../../test/dom";
 import { App } from "./app";
 
 useDom();

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { applyMove, mentions, targetAt } from "./move";
-import { board, lane } from "./test-board";
-import { useDom } from "./test-dom";
+import { board, lane } from "../../../test/board";
+import { useDom } from "../../../test/dom";
 
 useDom();
 
