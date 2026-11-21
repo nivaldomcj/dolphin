@@ -17,7 +17,7 @@ const moveBody = z
   .strict();
 
 /** The page's drag and drop. The reply always carries the board, so a failed move still shows the real one. */
-export async function move(req: Request): Promise<Response> {
+async function move(req: Request): Promise<Response> {
   try {
     const body = moveBody.parse(await req.json());
     const result = await moveTask(body.id, body.lane, body.at);
