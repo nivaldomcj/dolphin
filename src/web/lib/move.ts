@@ -1,3 +1,4 @@
+import { escapeRegExp } from "../../shared/escape-regexp";
 import { type Anchor, insertNear, UNPLACED, UNPLACED_LANE } from "../../shared/order";
 import type { Board } from "../../shared/types";
 
@@ -73,6 +74,5 @@ export function applyMove(board: Board, id: string, t: Target): Board | null {
 
 /** True when a warning names the task, as a whole id (T1 does not match T10). */
 export function mentions(warning: string, id: string): boolean {
-  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(^|[^\\w-])${escaped}($|[^\\w-])`).test(warning);
+  return new RegExp(`(^|[^\\w-])${escapeRegExp(id)}($|[^\\w-])`).test(warning);
 }

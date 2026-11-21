@@ -1,3 +1,5 @@
+import { escapeRegExp } from "../shared/escape-regexp";
+
 /** Scans text against the `denylist` in dolphin.config.ts. `bun run check:private` and the git hooks use it. */
 
 /**
@@ -6,9 +8,7 @@
  * those make test() resume from lastIndex and skip later matches.
  */
 export function matchers(terms: (string | RegExp)[]): RegExp[] {
-  return terms.map((t) =>
-    typeof t === "string" ? new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") : new RegExp(t.source, t.flags.replace(/[gy]/g, "")),
-  );
+  return terms.map((t) => (typeof t === "string" ? new RegExp(escapeRegExp(t), "i") : new RegExp(t.source, t.flags.replace(/[gy]/g, ""))));
 }
 
 const hit = (patterns: RegExp[], line: string) => patterns.find((m) => m.test(line));
