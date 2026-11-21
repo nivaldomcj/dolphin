@@ -46,13 +46,25 @@ test("Esc cancels a drag and the board does not change", async ({ board: page })
 });
 
 test("a plain click opens the card's link; an Alt click does not", async ({ board: page }) => {
+  // The link opens a stub, not the real tracker: no network and no third-party call.
+  await page.context().route("https://linear.app/**", (r) => r.fulfill({ body: "" }));
+  // Whether each click reached the browser's default action. Chrome turns an unprevented Alt-click into a download,
+  // not a tab, so counting popups would not catch a regression; the page's own verdict does. The window listener
+  // runs after the card's handler, so it sees its preventDefault.
+  await page.evaluate(() => {
+    const w = window as unknown as { prevented: boolean[] };
+    w.prevented = [];
+    addEventListener("click", (e) => w.prevented.push(e.defaultPrevented));
+  });
+  const prevented = () => page.evaluate(() => (window as unknown as { prevented: boolean[] }).prevented);
+
   await card(page, "ENG-160").click({ modifiers: ["Alt"] });
-  await page.waitForTimeout(300);
-  expect(page.context().pages()).toHaveLength(1);
+  expect(await prevented()).toEqual([true]);
 
   const popup = page.waitForEvent("popup");
   await card(page, "ENG-160").click();
   expect((await popup).url()).toBe("https://linear.app/acme/issue/ENG-160");
+  expect(await prevented()).toEqual([true, false]);
   await (await popup).close();
 });
 
