@@ -4,7 +4,8 @@ import { type Notice, NoticeAlert, Toast, useAutoHide } from "./toast";
 
 type State = { kind: "busy" } | ({ kind: "done" } & Notice);
 
-function describe(s: RefreshSummary): State {
+/** The toast for a refresh summary: a short title, one line per change, new task and failed source. */
+export function describeRefresh(s: RefreshSummary): State {
   const errors = Object.entries(s.errors).map(([source, msg]) => `${source}: ${msg}`);
   const parts = [
     s.changes.length > 0 && `${s.changes.length} changed`,
@@ -32,7 +33,7 @@ export function RefreshButton({ onBoard }: { onBoard: (b: Board) => void }) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const { summary, board } = (await res.json()) as { summary: RefreshSummary; board: Board };
       onBoard(board);
-      setToast(describe(summary));
+      setToast(describeRefresh(summary));
     } catch (e) {
       setToast({ kind: "done", title: "Refresh failed", lines: [e instanceof Error ? e.message : String(e)], failed: true });
     }
