@@ -141,40 +141,53 @@ To restore, stop the server, then copy a backup over `dolphin.db` and delete `do
 
 Task titles, rules and project names stay in `dolphin.db` and `dolphin.config.ts`, which git ignores. The
 `denylist` in the config lists the words that must never reach a commit: your employer, clients and projects.
-`bun install` copies two hooks from `.githooks/` into `.git/hooks/`: `pre-commit` scans the added lines and
-`commit-msg` scans the message. `bun run check:private` scans every tracked file.
+`bun install` copies two hooks from `.githooks/` into `.git/hooks/`: `pre-commit` scans the added lines (and runs
+Biome on the staged files) and `commit-msg` scans the message. `bun run check:private` scans every tracked file.
 
 ## Styling
 
-`bun-plugin-tailwind` (in `bunfig.toml`) builds the CSS for the HTML import. `src/web/app.css` loads Tailwind and
-DaisyUI, then `board.css`, the board's own look: lanes, cards and arrows. DaisyUI covers the controls (`btn`, `join`,
-`dropdown`, `input`, `toast`, `alert`, `loading`).
+`bun-plugin-tailwind` (in `bunfig.toml`) builds the CSS for the HTML import. `src/web/styles/app.css` loads Tailwind
+and DaisyUI, then the board's own look, one file per area: tokens, layout, legend, lanes, cards, arrows, tip and
+privacy. DaisyUI covers the controls (`btn`, `join`, `dropdown`, `input`, `toast`, `alert`, `loading`).
 
-- The theme setting sets `data-theme` on `<html>`. DaisyUI and `board.css` both read it.
+- Keep the import order in `app.css`: the dark-theme overrides in `lanes.css` come before the card and tip rules.
+- The theme setting sets `data-theme` on `<html>`. DaisyUI and the board styles both read it.
 - Do not name a CSS variable after one DaisyUI uses, such as `--border` or `--size`: the controls break.
-- `bun --hot` does not rebuild the CSS when only `board.css` changes. Restart the server.
+- `bun --hot` does not rebuild the CSS when only a board style file changes. Restart the server.
 
 ## Test
 
 ```sh
-bun test   # runs on an in-memory database (test-setup.ts), never on dolphin.db
+bun test           # unit tests, on an in-memory database (test/setup.ts), never on dolphin.db
+bun run test:e2e   # Playwright in your installed Chrome, against a demo board served on port 4791
+bun run lint       # Biome: lint rules and formatting; bun run lint:fix applies the safe fixes
 ```
+
+Test files sit next to the module they test. `test/` holds the shared helpers: `resetDb` and row builders for the
+database, `withConfig` and `useConfig` to swap config parts, `useDom` for the page tests, and page-side board builders.
 
 ## Layout
 
-- `src/server/`: `index.ts` (the `Bun.serve` routes: `/`, `/api/board`, `POST /api/refresh`, `POST /api/move`, `/mcp`), `mcp.ts` (the MCP
-  tools) and `guard.ts` (the Host/Origin check every API and MCP route goes through).
+`src/` is split by where code runs (server or page), and grouped by purpose inside.
+
+- `src/server/`: `index.ts` starts `Bun.serve` and serves the page; `routes.ts` holds `/api/board`,
+  `POST /api/refresh`, `POST /api/move` and `/mcp`; `mcp.ts` the MCP tools; `guard.ts` the Host/Origin check every
+  API and MCP route goes through.
 - `src/core/`: the board logic, with no HTTP. `board.ts` reads the board, `arrange.ts` holds the writes behind the MCP
-  tools and the page's drag and drop, and the rule checks; `order.ts` is the move's list step, shared with the page; `refresh.ts` applies tracker facts, `rules.ts` reads and writes the lane rules, `backup.ts` writes the daily copy. Tests sit next to them.
-- `src/sources/`: one fetcher per tracker (Linear, GitHub).
+  tools and the page's drag and drop, and the rule checks; `refresh.ts` applies tracker facts, `rules.ts` reads and
+  writes the lane rules, `backup.ts` writes the daily copy.
+- `src/sources/`: one fetcher per tracker (Linear, GitHub), and the `Fact` they return.
 - `src/db/`: the Kysely setup, the `bun:sqlite` adapter, the row types and `migrations/`.
-- `src/scripts/`: `import.ts` loads a `data.json` snapshot (it refuses to replace a board that has lanes unless you
-  add `--force`), `seed-demo.ts` writes the demo board, `backup.ts`, `check-private.ts` and `install-hooks.ts`.
-- `src/config.ts` loads `dolphin.config.ts`; `src/define-config.ts` holds its types.
-- `src/web/`: the Preact page. `app.tsx` is the layout; `hooks/` holds the state (board, search, collapsed lanes,
-  display settings) and `components/` the parts of the page. `app.css` is the CSS entry; `board.css` holds the
-  board styles.
-- `src/types.ts`: the types shared by the server and the page.
+- `src/shared/`: what the server and the page both import: the types and `order.ts`, the move's list step.
+- `src/tools/`: the logic behind the scripts: snapshot import, the privacy scan, the demo board, the git-hook installer.
+- `src/scripts/`: thin command-line wrappers over `tools/`: `import.ts` (it refuses to replace a board that has lanes
+  unless you add `--force`), `seed-demo.ts`, `backup.ts`, `check-private.ts` and `install-hooks.ts`. The git hooks
+  call `check-private.ts` by this path, so keep it there.
+- `src/config.ts` loads `dolphin.config.ts`; `src/define-config.ts` holds its types (your config imports it by path).
+- `src/web/`: the Preact page. `main.tsx` renders `app.tsx`, the layout; `hooks/` holds the state (board, search,
+  collapsed lanes, display settings, drag and drop), `components/` the parts of the page, `lib/` the pure helpers and
+  `styles/` the CSS.
+- `test/`: shared test helpers. `e2e/`: the Playwright tests.
 
 Task facts (title, status) come from the trackers. Lanes, positions and dependencies are set by hand or by Claude.
 `dolphin.db`, `dolphin.config.ts` and `data*.json` hold work data and are git-ignored.
