@@ -1,9 +1,9 @@
 @import "tailwindcss";
+/* The board's own look: lane colors, cards, arrows. Unlayered, so it wins over Tailwind's layers. */
+@import "./board.css";
 @plugin "daisyui" {
   themes: light --default, dark --prefersdark;
 }
-/* The board's own look: lane colors, cards, arrows. Unlayered, so it wins over Tailwind's layers. */
-@import "./board.css";
 
 /* Tooltips wait a moment before showing, so moving the pointer across the buttons does not flash them. */
 .tooltip:hover > .tooltip-content,
