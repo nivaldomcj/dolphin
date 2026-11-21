@@ -11,7 +11,7 @@ if (terms.length === 0) {
   console.warn("check:private: no denylist in dolphin.config.ts, nothing to check.");
   process.exit(0);
 }
-const ms = matchers(terms);
+const patterns = matchers(terms);
 
 const git = async (...args: string[]) => {
   const out = await Bun.$`git ${args}`.quiet().nothrow();
@@ -22,14 +22,14 @@ const git = async (...args: string[]) => {
 const findings: string[] = [];
 const args = Bun.argv.slice(2);
 if (args[0] === "--message") {
-  findings.push(...scanMessage(ms, await Bun.file(args[1]!).text()));
+  findings.push(...scanMessage(patterns, await Bun.file(args[1]!).text()));
 } else if (args[0] === "--staged") {
   // --no-renames: a pure rename has no "+++" line, so it is read as an added file, new name and content included.
-  findings.push(...scanDiff(ms, await git("diff", "--cached", "-U0", "--no-color", "--no-renames", "--diff-filter=d")));
+  findings.push(...scanDiff(patterns, await git("diff", "--cached", "-U0", "--no-color", "--no-renames", "--diff-filter=d")));
 } else {
   for (const file of (await git("ls-files")).split("\n").filter(Boolean)) {
     const blob = Bun.file(file);
-    findings.push(...scanFile(ms, file, (await blob.exists()) ? await blob.text() : null));
+    findings.push(...scanFile(patterns, file, (await blob.exists()) ? await blob.text() : null));
   }
 }
 
