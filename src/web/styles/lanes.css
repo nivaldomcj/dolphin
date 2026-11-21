@@ -6,35 +6,31 @@
   border-top: 1px solid var(--line);
   background: var(--lane-bg);
 }
-.lane-head {
-  background: var(--lane-head);
-}
-.lane:first-child {
-  border-top: 0;
-}
+/* The header is a button: it takes the page font and color, then its own weight (font resets font-weight). */
 .lane-head {
   position: sticky;
   left: 0;
   z-index: 3;
-  width: 190px;
-  min-width: 190px;
-  padding: 10px 12px;
-  font-weight: 600;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  width: 190px;
+  min-width: 190px;
+  padding: 10px 12px;
   border-right: 1px solid var(--line);
+  background: var(--lane-head);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.lane:first-child {
+  border-top: 0;
 }
 .lane-head small {
   font-weight: 400;
   color: var(--muted);
-}
-.lane-head {
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 600;
-  color: inherit;
 }
 .lane-head:hover {
   filter: brightness(0.96);
