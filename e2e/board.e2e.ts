@@ -121,7 +121,8 @@ test("the closed settings panel covers no card", async ({ board: page }) => {
     [...document.querySelectorAll<HTMLElement>(".card")]
       .filter((c) => {
         const r = c.getBoundingClientRect();
-        const x = r.x + r.width / 2, y = r.y + r.height / 2;
+        const x = r.x + r.width / 2,
+          y = r.y + r.height / 2;
         // Only cards on screen can be under the panel.
         if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return false;
         return document.elementFromPoint(x, y)?.closest(".card") !== c;

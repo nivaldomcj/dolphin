@@ -105,7 +105,8 @@ export function useMove(board: Board | null, setBoard: (b: Board) => void, scrol
     e.preventDefault();
     swallowClick.current = true;
     const closed = (e.currentTarget as HTMLElement | null)?.classList.contains("closed") ?? false;
-    const x0 = e.clientX, y0 = e.clientY;
+    const x0 = e.clientX,
+      y0 = e.clientY;
     let last = { x: x0, y: y0 };
     let frame = 0;
 
@@ -114,7 +115,8 @@ export function useMove(board: Board | null, setBoard: (b: Board) => void, scrol
       if (dragRef.current) update({ ...dragRef.current, x, y, target: targetAt(x, y, id, closed) });
     };
     const scroll = () => {
-      const el = scroller.current, d = dragRef.current;
+      const el = scroller.current,
+        d = dragRef.current;
       if (el && d) {
         const r = el.getBoundingClientRect();
         const dx = d.x < r.left + EDGE ? -SPEED : d.x > r.right - EDGE ? SPEED : 0;

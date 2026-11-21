@@ -13,7 +13,14 @@ export const task = (id: string, over: Partial<Task> = {}): Task => ({
   ...over,
 });
 
-export const lane = (key: string, ids: string[], over: Partial<Lane> = {}): Lane => ({ key, name: `Lane ${key} name`, bg: "#fff", head: "#eee", ids, ...over });
+export const lane = (key: string, ids: string[], over: Partial<Lane> = {}): Lane => ({
+  key,
+  name: `Lane ${key} name`,
+  bg: "#fff",
+  head: "#eee",
+  ids,
+  ...over,
+});
 
 /** A board from lanes; every id in them gets a default task unless `tasks` gives one. */
 export function board(lanes: Lane[], tasks: Task[] = [], edges: [string, string][] = []): Board {

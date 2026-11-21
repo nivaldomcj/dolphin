@@ -12,11 +12,7 @@ export function describeRefresh(s: RefreshSummary): State {
     s.added.length > 0 && `${s.added.length} new`,
     errors.length > 0 && `${errors.length} source failed`,
   ].filter(Boolean);
-  const lines = [
-    ...s.changes.map((c) => `${c.id}: ${c.from} → ${c.to}`),
-    ...s.added.map((id) => `${id}: new, in lane N`),
-    ...errors,
-  ];
+  const lines = [...s.changes.map((c) => `${c.id}: ${c.from} → ${c.to}`), ...s.added.map((id) => `${id}: new, in lane N`), ...errors];
   return { kind: "done", title: parts.length > 0 ? parts.join(", ") : "Up to date", lines, failed: errors.length > 0 };
 }
 
@@ -41,7 +37,14 @@ export function RefreshButton({ onBoard }: { onBoard: (b: Board) => void }) {
 
   return (
     <>
-      <button type="button" class="tooltip tooltip-left btn btn-ghost btn-sm btn-square" data-tip="Refresh statuses from Linear and GitHub" aria-label="Refresh" onClick={run} disabled={busy}>
+      <button
+        type="button"
+        class="tooltip tooltip-left btn btn-ghost btn-sm btn-square"
+        data-tip="Refresh statuses from Linear and GitHub"
+        aria-label="Refresh"
+        onClick={run}
+        disabled={busy}
+      >
         {busy ? <span class="loading loading-spinner loading-xs" /> : "🔁"}
       </button>
       {toast && (

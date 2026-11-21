@@ -11,11 +11,17 @@ describe("applyMove", () => {
   const start = board([lane("A", ["T1", "T2", "T3"]), lane("B", ["T4"])]);
 
   test("moves a card across lanes, next to the anchor", () => {
-    expect(ids(applyMove(start, "T1", { lane: "B", at: { id: "T4", side: "before" } }))).toEqual([["A", ["T2", "T3"]], ["B", ["T1", "T4"]]]);
+    expect(ids(applyMove(start, "T1", { lane: "B", at: { id: "T4", side: "before" } }))).toEqual([
+      ["A", ["T2", "T3"]],
+      ["B", ["T1", "T4"]],
+    ]);
   });
 
   test("moves a card inside its lane", () => {
-    expect(ids(applyMove(start, "T3", { lane: "A", at: { id: "T1", side: "before" } }))).toEqual([["A", ["T3", "T1", "T2"]], ["B", ["T4"]]]);
+    expect(ids(applyMove(start, "T3", { lane: "A", at: { id: "T1", side: "before" } }))).toEqual([
+      ["A", ["T3", "T1", "T2"]],
+      ["B", ["T4"]],
+    ]);
   });
 
   test("dropping on the card's own gap, or where it already is, changes nothing", () => {
@@ -30,12 +36,19 @@ describe("applyMove", () => {
   });
 
   test("dropping in lane N unplaces the card, adding lane N when the board has none", () => {
-    expect(ids(applyMove(start, "T4", { lane: "N" }))).toEqual([["A", ["T1", "T2", "T3"]], ["B", []], ["N", ["T4"]]]);
+    expect(ids(applyMove(start, "T4", { lane: "N" }))).toEqual([
+      ["A", ["T1", "T2", "T3"]],
+      ["B", []],
+      ["N", ["T4"]],
+    ]);
   });
 
   test("dropping in an existing lane N adds the card at its end", () => {
     const withN = board([lane("A", ["T1"]), lane("N", ["NEW"])]);
-    expect(ids(applyMove(withN, "T1", { lane: "N" }))).toEqual([["A", []], ["N", ["NEW", "T1"]]]);
+    expect(ids(applyMove(withN, "T1", { lane: "N" }))).toEqual([
+      ["A", []],
+      ["N", ["NEW", "T1"]],
+    ]);
   });
 
   test("a card already in lane N dropped on lane N changes nothing", () => {
@@ -49,7 +62,10 @@ describe("applyMove", () => {
 
   test("does not change the board it is given", () => {
     applyMove(start, "T1", { lane: "B" });
-    expect(ids(start)).toEqual([["A", ["T1", "T2", "T3"]], ["B", ["T4"]]]);
+    expect(ids(start)).toEqual([
+      ["A", ["T1", "T2", "T3"]],
+      ["B", ["T4"]],
+    ]);
   });
 });
 
@@ -80,7 +96,17 @@ describe("targetAt", () => {
       const a = document.createElement("a");
       a.className = "card";
       a.dataset.id = id;
-      a.getBoundingClientRect = () => ({ left: i * 100, width: 100, right: i * 100 + 100, top: 0, bottom: 20, height: 20, x: i * 100, y: 0, toJSON() {} });
+      a.getBoundingClientRect = () => ({
+        left: i * 100,
+        width: 100,
+        right: i * 100 + 100,
+        top: 0,
+        bottom: 20,
+        height: 20,
+        x: i * 100,
+        y: 0,
+        toJSON() {},
+      });
       cards.appendChild(a);
     });
     document.body.appendChild(el);

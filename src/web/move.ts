@@ -23,7 +23,8 @@ export function targetAt(x: number, y: number, id: string, closed: boolean): Tar
   const self = all.findIndex((c) => c.dataset.id === id);
   // Hidden (completed) cards are not in `all`, so the card's own gap is judged by its visible neighbors only:
   // otherwise dropping a card where it already is could move it past a hidden card.
-  const prev = self >= 0 ? cardId(all[self - 1]) : undefined, next = self >= 0 ? cardId(all[self + 1]) : undefined;
+  const prev = self >= 0 ? cardId(all[self - 1]) : undefined,
+    next = self >= 0 ? cardId(all[self + 1]) : undefined;
   const home = (t: Target): Target => {
     if (self < 0) return t;
     const stays = t.at ? t.at.id === (t.at.side === "before" ? next : prev) : next === undefined;
@@ -51,7 +52,10 @@ export function applyMove(board: Board, id: string, t: Target): Board | null {
     // Lane N may exist only during the drag: then the board gets it back, holding this task, as the server will show.
     const lanes = board.lanes.map((l) => (l === from ? { ...l, ids: l.ids.filter((x) => x !== id) } : l));
     const n = lanes.find((l) => l.key === UNPLACED_LANE);
-    return { ...board, lanes: n ? lanes.map((l) => (l === n ? { ...l, ids: [...l.ids, id] } : l)) : [...lanes, { ...UNPLACED, ids: [id] }] };
+    return {
+      ...board,
+      lanes: n ? lanes.map((l) => (l === n ? { ...l, ids: [...l.ids, id] } : l)) : [...lanes, { ...UNPLACED, ids: [id] }],
+    };
   }
   if (!to) return null;
   let ids: string[];

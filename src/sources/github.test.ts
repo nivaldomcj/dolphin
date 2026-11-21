@@ -32,7 +32,14 @@ test("each JSON line becomes a fact with the prefixed id, and a status outside `
 
   expect(toFacts(stdout, project)).toEqual([
     { id: "SITE-12", source: "github", title: "Docs page", status: "Doing", url: "https://github.com/org/docs/issues/12", closed: false },
-    { id: "SITE-14", source: "github", title: "Shipped one", status: "Shipped", url: "https://github.com/org/docs/issues/14", closed: true },
+    {
+      id: "SITE-14",
+      source: "github",
+      title: "Shipped one",
+      status: "Shipped",
+      url: "https://github.com/org/docs/issues/14",
+      closed: true,
+    },
   ]);
 });
 

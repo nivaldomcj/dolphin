@@ -73,7 +73,16 @@ test("useCollapsedLanes toggles lanes and keeps them as a comma list", () => {
 describe("useDisplay", () => {
   test("starts from the defaults", () => {
     const d = renderHook(() => useDisplay()).result.current;
-    expect([d.theme, d.titles, d.positions, d.inLane, d.legend, d.completed, d.otherCycles, d.privacy]).toEqual(["system", true, true, false, false, true, true, false]);
+    expect([d.theme, d.titles, d.positions, d.inLane, d.legend, d.completed, d.otherCycles, d.privacy]).toEqual([
+      "system",
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+    ]);
   });
 
   test("a chosen theme is set on the page, and system removes it", () => {
@@ -104,7 +113,14 @@ describe("useDisplay", () => {
 
 describe("useBoard", () => {
   test("loads the board and maps lanes and blockers both ways", async () => {
-    const b = board([lane("A", ["T1", "T2"]), lane("B", ["T3"])], [], [["T1", "T3"], ["T2", "T3"]]);
+    const b = board(
+      [lane("A", ["T1", "T2"]), lane("B", ["T3"])],
+      [],
+      [
+        ["T1", "T3"],
+        ["T2", "T3"],
+      ],
+    );
     const fetch = spyOn(globalThis, "fetch").mockResolvedValue(Response.json(b));
 
     const { result } = renderHook(() => useBoard());

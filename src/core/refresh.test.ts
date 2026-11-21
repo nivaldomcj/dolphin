@@ -5,7 +5,14 @@ import { readBoard } from "./board";
 import { config } from "../config";
 import { createRefresh, NOT_FOUND, refresh as refreshNow } from "./refresh";
 
-const fact = (id: string, status: string, closed = false): Fact => ({ id, source: "linear", title: `${id} title`, status, url: `https://x/${id}`, closed });
+const fact = (id: string, status: string, closed = false): Fact => ({
+  id,
+  source: "linear",
+  title: `${id} title`,
+  status,
+  url: `https://x/${id}`,
+  closed,
+});
 
 let linear: () => Promise<{ facts: Fact[]; missing: string[]; error?: string }> = async () => ({ facts: [], missing: [] });
 // Fakes for the two trackers; tests reassign them.
@@ -22,7 +29,13 @@ beforeEach(async () => {
       { id: "G1", source: "github", title: "G1 title", status: "Backlog", url: "https://x/G1", meta: "{}" },
     ])
     .execute();
-  await db.insertInto("placement").values([{ task_id: "L1", lane_key: "A", pos: 0 }, { task_id: "G1", lane_key: "A", pos: 1 }]).execute();
+  await db
+    .insertInto("placement")
+    .values([
+      { task_id: "L1", lane_key: "A", pos: 0 },
+      { task_id: "G1", lane_key: "A", pos: 1 },
+    ])
+    .execute();
   linear = async () => ({ facts: [], missing: [] });
   github = async () => [];
 });
@@ -54,7 +67,13 @@ test("a failing source leaves its tasks untouched and the other source still app
 });
 
 test("writes the cycle without reporting it as a change, and keeps it when the tracker has no cycles", async () => {
-  linear = async () => ({ facts: [{ ...fact("L1", "Todo"), cycle: { number: 43, state: "next" } }, { ...fact("L2", "Todo"), cycle: null }], missing: [] });
+  linear = async () => ({
+    facts: [
+      { ...fact("L1", "Todo"), cycle: { number: 43, state: "next" } },
+      { ...fact("L2", "Todo"), cycle: null },
+    ],
+    missing: [],
+  });
   github = async () => [{ ...fact("G1", "Backlog"), source: "github" }];
 
   expect(await refresh()).toEqual({ changes: [], added: ["L2"], errors: {} });
@@ -160,7 +179,11 @@ test("partial Linear results apply, with the error reported and nothing closed a
 
   const summary = await refresh();
 
-  expect(summary).toEqual({ changes: [{ id: "L1", from: "Todo", to: "In Progress" }], added: [], errors: { linear: "Linear API 502: no data" } });
+  expect(summary).toEqual({
+    changes: [{ id: "L1", from: "Todo", to: "In Progress" }],
+    added: [],
+    errors: { linear: "Linear API 502: no data" },
+  });
 });
 
 test("the exported refresh reads the configured trackers and reports nothing when both are off", async () => {

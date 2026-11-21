@@ -20,7 +20,9 @@ export { expect };
 export const card = (page: Page, id: string): Locator => page.locator(`.card[data-id="${id}"]`);
 export const laneEl = (page: Page, key: string): Locator => page.locator(`.lane[data-lane="${key}"]`);
 export const laneIds = (page: Page, key: string): Promise<string[]> =>
-  laneEl(page, key).locator(".card").evaluateAll((cards) => cards.map((c) => (c as HTMLElement).dataset.id!));
+  laneEl(page, key)
+    .locator(".card")
+    .evaluateAll((cards) => cards.map((c) => (c as HTMLElement).dataset.id!));
 
 /** The center of an element, in page coordinates. */
 export async function center(l: Locator): Promise<{ x: number; y: number }> {

@@ -21,7 +21,9 @@ describe("trackerOf", () => {
   });
 
   test("anything else stops the import instead of guessing", () => {
-    expect(() => trackerOf("task-12", undefined)).toThrow('task-12: cannot tell its tracker; add "source": "linear" or "github" to it in the snapshot');
+    expect(() => trackerOf("task-12", undefined)).toThrow(
+      'task-12: cannot tell its tracker; add "source": "linear" or "github" to it in the snapshot',
+    );
     expect(() => trackerOf("ENG12", undefined)).toThrow("cannot tell its tracker");
   });
 });
@@ -45,7 +47,10 @@ describe("importSnapshot", () => {
     expect(await importSnapshot(snapshot())).toEqual({ lanes: 2, tasks: 3, placements: 3, edges: 1 });
 
     const board = await readBoard();
-    expect(board.lanes.map((l) => [l.key, l.name, l.ids])).toEqual([["A", "First", ["ENG-1", "ENG-2"]], ["B", "Second", ["SITE-3"]]]);
+    expect(board.lanes.map((l) => [l.key, l.name, l.ids])).toEqual([
+      ["A", "First", ["ENG-1", "ENG-2"]],
+      ["B", "Second", ["SITE-3"]],
+    ]);
     expect(board.tasks["ENG-1"]).toMatchObject({ source: "linear", url: "", note: "keep", closed: false });
     expect(board.tasks["ENG-2"]).toMatchObject({ closed: true });
     expect(board.tasks["SITE-3"]).toMatchObject({ source: "github" });
@@ -70,11 +75,28 @@ describe("importSnapshot", () => {
   });
 
   test("a repeated edge is stored once", async () => {
-    expect((await importSnapshot(snapshot({ edges: [["ENG-1", "SITE-3"], ["ENG-1", "SITE-3"]] }))).edges).toBe(1);
+    expect(
+      (
+        await importSnapshot(
+          snapshot({
+            edges: [
+              ["ENG-1", "SITE-3"],
+              ["ENG-1", "SITE-3"],
+            ],
+          }),
+        )
+      ).edges,
+    ).toBe(1);
   });
 
   test("an explicit source wins over the id shape", async () => {
-    await importSnapshot(snapshot({ lanes: [], edges: [], tasks: { "ENG-5": { title: "t", status: "Todo", source: "github", url: "https://example.com/5" } } }));
+    await importSnapshot(
+      snapshot({
+        lanes: [],
+        edges: [],
+        tasks: { "ENG-5": { title: "t", status: "Todo", source: "github", url: "https://example.com/5" } },
+      }),
+    );
 
     expect((await readBoard()).tasks["ENG-5"]?.source).toBe("github");
   });
@@ -113,7 +135,10 @@ describe("importSnapshot", () => {
     await expect(importSnapshot(bad, { force: true })).rejects.toThrow("who-knows: cannot tell its tracker");
 
     const board = await readBoard();
-    expect(board.lanes.map((l) => [l.key, l.ids])).toEqual([["A", ["ENG-1", "ENG-2"]], ["B", ["SITE-3"]]]);
+    expect(board.lanes.map((l) => [l.key, l.ids])).toEqual([
+      ["A", ["ENG-1", "ENG-2"]],
+      ["B", ["SITE-3"]],
+    ]);
     expect(Object.keys(board.tasks).sort()).toEqual(["ENG-1", "ENG-2", "SITE-3"]);
   });
 });

@@ -33,7 +33,17 @@ function lanesInDom(b: Board) {
       const a = document.createElement("a");
       a.className = "card";
       a.dataset.id = id;
-      a.getBoundingClientRect = () => ({ left: i * 100, width: 100, right: i * 100 + 100, top: 0, bottom: 20, height: 20, x: i * 100, y: 0, toJSON() {} });
+      a.getBoundingClientRect = () => ({
+        left: i * 100,
+        width: 100,
+        right: i * 100 + 100,
+        top: 0,
+        bottom: 20,
+        height: 20,
+        x: i * 100,
+        y: 0,
+        toJSON() {},
+      });
       el.querySelector(".cards")!.appendChild(a);
     });
     document.body.appendChild(el);
@@ -51,8 +61,17 @@ afterEach(() => {
 
 /** An Alt + press on a card, as the card's onPointerDown hands it to the hook. */
 const press = (over: Partial<PointerEvent> = {}) =>
-  ({ altKey: true, button: 0, clientX: 0, clientY: 5, preventDefault() {}, currentTarget: document.createElement("a"), ...over }) as unknown as PointerEvent;
-const pointer = (type: string, x: number, buttons = 1) => act(() => void dispatchEvent(new PointerEvent(type, { clientX: x, clientY: 5, buttons })));
+  ({
+    altKey: true,
+    button: 0,
+    clientX: 0,
+    clientY: 5,
+    preventDefault() {},
+    currentTarget: document.createElement("a"),
+    ...over,
+  }) as unknown as PointerEvent;
+const pointer = (type: string, x: number, buttons = 1) =>
+  act(() => void dispatchEvent(new PointerEvent(type, { clientX: x, clientY: 5, buttons })));
 
 /** Alt-drags `id` over lane `to` at x, and drops it there. */
 async function dragTo(r: ReturnType<typeof setup>, id: string, to: string, x: number) {
@@ -161,12 +180,17 @@ describe("dropping", () => {
     lanesInDom(start());
     const server = board([lane("A", ["T2"]), lane("B", ["T3", "T1"]), lane("C", [])]);
     let reply!: (r: Response) => void;
-    const fetch = spyOn(globalThis, "fetch").mockImplementation((() => new Promise<Response>((resolve) => (reply = resolve))) as unknown as typeof globalThis.fetch);
+    const fetch = spyOn(globalThis, "fetch").mockImplementation(
+      (() => new Promise<Response>((resolve) => (reply = resolve))) as unknown as typeof globalThis.fetch,
+    );
     const r = setup();
 
     await dragTo(r, "T1", "B", 150);
 
-    expect(ids(r.result.current.board)).toEqual([["A", ["T2"]], ["B", ["T3", "T1"]]]);
+    expect(ids(r.result.current.board)).toEqual([
+      ["A", ["T2"]],
+      ["B", ["T3", "T1"]],
+    ]);
     await waitFor(() => expect(moves(fetch)).toEqual([{ id: "T1", lane: "B", at: { id: "T3", side: "after" } }]));
 
     await act(async () => reply(Response.json({ result: { done: "T1 is now B#2.", warnings: [] }, board: server })));
@@ -177,26 +201,44 @@ describe("dropping", () => {
   test("a warning about the moved task shows in a notice; warnings about other tasks do not", async () => {
     lanesInDom(start());
     spyOn(globalThis, "fetch").mockResolvedValue(
-      Response.json({ result: { done: "T1 is now B#2.", warnings: ["T1 is a release in lane B, not lane A.", "T10 is elsewhere."] }, board: start() }),
+      Response.json({
+        result: { done: "T1 is now B#2.", warnings: ["T1 is a release in lane B, not lane A.", "T10 is elsewhere."] },
+        board: start(),
+      }),
     );
-    const r = setup();
-
-    await dragTo(r, "T1", "B", 150);
-
-    await waitFor(() => expect(r.result.current.notice).toEqual({ failed: false, title: "T1 is now B#2.", lines: ["T1 is a release in lane B, not lane A."] }));
-  });
-
-  test("a refused move shows why and takes the server's board", async () => {
-    lanesInDom(start());
-    spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ error: "T3 is not in that lane any more; reload the board.", board: start() }, { status: 400 }));
     const r = setup();
 
     await dragTo(r, "T1", "B", 150);
 
     await waitFor(() =>
-      expect(r.result.current.notice).toEqual({ failed: true, title: "Could not move T1", lines: ["T3 is not in that lane any more; reload the board."] }),
+      expect(r.result.current.notice).toEqual({
+        failed: false,
+        title: "T1 is now B#2.",
+        lines: ["T1 is a release in lane B, not lane A."],
+      }),
     );
-    expect(ids(r.result.current.board)).toEqual([["A", ["T1", "T2"]], ["B", ["T3"]]]);
+  });
+
+  test("a refused move shows why and takes the server's board", async () => {
+    lanesInDom(start());
+    spyOn(globalThis, "fetch").mockResolvedValue(
+      Response.json({ error: "T3 is not in that lane any more; reload the board.", board: start() }, { status: 400 }),
+    );
+    const r = setup();
+
+    await dragTo(r, "T1", "B", 150);
+
+    await waitFor(() =>
+      expect(r.result.current.notice).toEqual({
+        failed: true,
+        title: "Could not move T1",
+        lines: ["T3 is not in that lane any more; reload the board."],
+      }),
+    );
+    expect(ids(r.result.current.board)).toEqual([
+      ["A", ["T1", "T2"]],
+      ["B", ["T3"]],
+    ]);
   });
 
   test("a lost reply puts the old board back, says so, and asks the server again", async () => {
@@ -210,7 +252,12 @@ describe("dropping", () => {
     await dragTo(r, "T1", "B", 150);
 
     await waitFor(() => expect(r.result.current.notice).toEqual({ failed: true, title: "Could not move T1", lines: ["Network down"] }));
-    await waitFor(() => expect(ids(r.result.current.board)).toEqual([["A", ["T2"]], ["B", ["T3", "T1"]]]));
+    await waitFor(() =>
+      expect(ids(r.result.current.board)).toEqual([
+        ["A", ["T2"]],
+        ["B", ["T3", "T1"]],
+      ]),
+    );
     expect(fetch).toHaveBeenCalledWith("/api/board");
   });
 
@@ -235,14 +282,19 @@ describe("dropping", () => {
     await dragTo(r, "T2", "A", 500);
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/board"));
-    expect(ids(r.result.current.board)).toEqual([["A", ["T1", "T2"]], ["B", ["T3"]]]);
+    expect(ids(r.result.current.board)).toEqual([
+      ["A", ["T1", "T2"]],
+      ["B", ["T3"]],
+    ]);
     expect(r.result.current.notice).toBeNull();
   });
 
   test("moves are sent one at a time, and only the newest reply replaces the board", async () => {
     lanesInDom(start());
     const replies: ((r: Response) => void)[] = [];
-    const fetch = spyOn(globalThis, "fetch").mockImplementation((() => new Promise<Response>((resolve) => replies.push(resolve))) as unknown as typeof globalThis.fetch);
+    const fetch = spyOn(globalThis, "fetch").mockImplementation(
+      (() => new Promise<Response>((resolve) => replies.push(resolve))) as unknown as typeof globalThis.fetch,
+    );
     const r = setup();
 
     await dragTo(r, "T1", "B", 150);

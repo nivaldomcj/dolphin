@@ -18,10 +18,25 @@ afterAll(() => {
 
 beforeEach(async () => {
   for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
-  await db.insertInto("lane").values([{ key: "A", name: "a", bg: "", head: "", ord: 0 }, { key: "B", name: "b", bg: "", head: "", ord: 1 }]).execute();
+  await db
+    .insertInto("lane")
+    .values([
+      { key: "A", name: "a", bg: "", head: "", ord: 0 },
+      { key: "B", name: "b", bg: "", head: "", ord: 1 },
+    ])
+    .execute();
   const task = (id: string) => ({ id, source: "linear" as const, title: id, status: "Todo", url: "", meta: "{}" });
-  await db.insertInto("task").values([task("T1"), task("T2")]).execute();
-  await db.insertInto("placement").values([{ task_id: "T1", lane_key: "A", pos: 0 }, { task_id: "T2", lane_key: "A", pos: 1 }]).execute();
+  await db
+    .insertInto("task")
+    .values([task("T1"), task("T2")])
+    .execute();
+  await db
+    .insertInto("placement")
+    .values([
+      { task_id: "T1", lane_key: "A", pos: 0 },
+      { task_id: "T2", lane_key: "A", pos: 1 },
+    ])
+    .execute();
 });
 
 const post = (body: unknown, headers: Record<string, string> = host) =>

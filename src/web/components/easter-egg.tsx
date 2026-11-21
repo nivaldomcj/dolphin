@@ -23,7 +23,9 @@ export function Title() {
           <div class="modal-box w-11/12 max-w-3xl p-2 pt-10">
             {/* Esc does not reach the dialog while the iframe has focus, so the box needs its own close button. */}
             <form method="dialog">
-              <button type="submit" class="btn btn-ghost btn-sm btn-circle absolute top-1 right-1" aria-label="Close">✕</button>
+              <button type="submit" class="btn btn-ghost btn-sm btn-circle absolute top-1 right-1" aria-label="Close">
+                ✕
+              </button>
             </form>
             <iframe
               class="aspect-video w-full rounded-box"
@@ -35,7 +37,9 @@ export function Title() {
             />
           </div>
           <form method="dialog" class="modal-backdrop">
-            <button type="submit" aria-label="Close">close</button>
+            <button type="submit" aria-label="Close">
+              close
+            </button>
           </form>
         </dialog>
       )}

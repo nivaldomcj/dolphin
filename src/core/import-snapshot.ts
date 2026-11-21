@@ -49,7 +49,12 @@ export class BoardNotEmptyError extends Error {
 }
 
 const count = async (table: "lane" | "task" | "placement" | "edge") =>
-  (await db.selectFrom(table).select((eb) => eb.fn.countAll<number>().as("n")).executeTakeFirstOrThrow()).n;
+  (
+    await db
+      .selectFrom(table)
+      .select((eb) => eb.fn.countAll<number>().as("n"))
+      .executeTakeFirstOrThrow()
+  ).n;
 
 /**
  * Replaces every lane, task, placement and edge with the snapshot's, in one transaction: a bad task leaves the old
@@ -68,17 +73,29 @@ export async function importSnapshot(snap: Snapshot, { force = false } = {}): Pr
       const source = given ?? trackerOf(id, url);
       if (!url && source === "github") throw new Error(`${id}: a GitHub task needs a url in the snapshot`);
       // A Linear task without a url gets Linear's own link on the next refresh.
-      await trx.insertInto("task").values({ id, source, title, status, url: url ?? "", closed: closed ? 1 : 0, meta: JSON.stringify(meta) }).execute();
+      await trx
+        .insertInto("task")
+        .values({ id, source, title, status, url: url ?? "", closed: closed ? 1 : 0, meta: JSON.stringify(meta) })
+        .execute();
     }
 
     const lanes = snap.lanes.filter((l) => l.key !== "N");
     for (const [ord, lane] of lanes.entries()) {
       const [bg, head] = PALETTE[ord % PALETTE.length]!;
-      await trx.insertInto("lane").values({ key: lane.key, name: lane.name, bg: lane.bg ?? bg, head: lane.head ?? head, ord }).execute();
-      for (const [pos, task_id] of lane.ids.entries()) await trx.insertInto("placement").values({ task_id, lane_key: lane.key, pos }).execute();
+      await trx
+        .insertInto("lane")
+        .values({ key: lane.key, name: lane.name, bg: lane.bg ?? bg, head: lane.head ?? head, ord })
+        .execute();
+      for (const [pos, task_id] of lane.ids.entries())
+        await trx.insertInto("placement").values({ task_id, lane_key: lane.key, pos }).execute();
     }
 
-    for (const [a, b] of snap.edges) await trx.insertInto("edge").values({ a, b }).onConflict((oc) => oc.doNothing()).execute();
+    for (const [a, b] of snap.edges)
+      await trx
+        .insertInto("edge")
+        .values({ a, b })
+        .onConflict((oc) => oc.doNothing())
+        .execute();
   });
 
   return { lanes: await count("lane"), tasks: await count("task"), placements: await count("placement"), edges: await count("edge") };

@@ -38,7 +38,10 @@ test("a commit message is scanned without git's # comment lines", () => {
 
 describe("scanFile", () => {
   test("reports a matching file name and matching lines", () => {
-    expect(scanFile(ms, "docs/acme.md", "hello\nSECRET-1")).toEqual(["docs/acme.md: file name matches /acme/i", "docs/acme.md:2: matches /\\bSECRET-\\d+/"]);
+    expect(scanFile(ms, "docs/acme.md", "hello\nSECRET-1")).toEqual([
+      "docs/acme.md: file name matches /acme/i",
+      "docs/acme.md:2: matches /\\bSECRET-\\d+/",
+    ]);
   });
 
   test("a binary file is checked by name only", () => {
@@ -66,10 +69,7 @@ describe("scanDiff", () => {
   ].join("\n");
 
   test("reports added lines and new file names, not removed lines", () => {
-    expect(scanDiff(ms, diff)).toEqual([
-      "notes/acme.md: file name matches /acme/i",
-      "notes/acme.md: added line matches /\\bSECRET-\\d+/",
-    ]);
+    expect(scanDiff(ms, diff)).toEqual(["notes/acme.md: file name matches /acme/i", "notes/acme.md: added line matches /\\bSECRET-\\d+/"]);
   });
 
   test("an empty diff is clean", () => {

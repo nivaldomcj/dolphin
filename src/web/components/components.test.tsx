@@ -47,7 +47,11 @@ describe("Lane", () => {
   test("shows each known task as a card linking to its tracker, numbered by place", () => {
     const { container } = show();
 
-    expect(cards(container).map((c) => [c.dataset.id, c.querySelector(".pos")?.textContent])).toEqual([["T1", "1"], ["T2", "2"], ["T3", "3"]]);
+    expect(cards(container).map((c) => [c.dataset.id, c.querySelector(".pos")?.textContent])).toEqual([
+      ["T1", "1"],
+      ["T2", "2"],
+      ["T3", "3"],
+    ]);
     expect(cards(container)[0]?.getAttribute("href")).toBe("https://example.com/T1");
     expect(container.textContent).toContain("Lane A name");
     expect(container.textContent).toContain("3 tasks");
@@ -56,7 +60,10 @@ describe("Lane", () => {
   test("a hidden card keeps the others' numbers, and leaves the count", () => {
     const { container } = show({ hide: { closed: true, otherCycles: false } });
 
-    expect(cards(container).map((c) => [c.dataset.id, c.querySelector(".pos")?.textContent])).toEqual([["T1", "1"], ["T3", "3"]]);
+    expect(cards(container).map((c) => [c.dataset.id, c.querySelector(".pos")?.textContent])).toEqual([
+      ["T1", "1"],
+      ["T3", "3"],
+    ]);
     expect(container.textContent).toContain("2 tasks");
   });
 
@@ -98,7 +105,17 @@ describe("Lane", () => {
 
   test("one task is counted in the singular", () => {
     const { container } = render(
-      <Lane lane={lane("B", ["T1"])} tasks={tasks} markOf={() => undefined} collapsed={false} onToggle={noop} hide={{ closed: false, otherCycles: false }} dragId={undefined} drop={null} {...handlers} />,
+      <Lane
+        lane={lane("B", ["T1"])}
+        tasks={tasks}
+        markOf={() => undefined}
+        collapsed={false}
+        onToggle={noop}
+        hide={{ closed: false, otherCycles: false }}
+        dragId={undefined}
+        drop={null}
+        {...handlers}
+      />,
     );
     expect(container.textContent).toContain("1 task");
     expect(container.textContent).not.toContain("1 tasks");
@@ -221,7 +238,15 @@ describe("Settings", () => {
 
 describe("Tip", () => {
   test("shows the task's facts, its blockers, what it blocks and its note", () => {
-    const t = task("ENG-1", { status: "In Progress", kind: "release", app: "billing", project: "Q4", parent: "ENG-0", note: "ship Friday", cycle: { number: 7, state: "next" } });
+    const t = task("ENG-1", {
+      status: "In Progress",
+      kind: "release",
+      app: "billing",
+      project: "Q4",
+      parent: "ENG-0",
+      note: "ship Friday",
+      cycle: { number: 7, state: "next" },
+    });
     const text = render(<Tip task={t} x={10} y={10} waitsFor={["ENG-2"]} blocks={["ENG-3", "ENG-4"]} />).container.textContent ?? "";
 
     expect(text).toContain("ENG-1 · In Progress");
@@ -233,7 +258,9 @@ describe("Tip", () => {
   });
 
   test("leaves out the parts a task does not have", () => {
-    const text = render(<Tip task={task("T1", { cycle: { number: 3, state: "current" } })} x={0} y={0} waitsFor={[]} blocks={[]} />).container.textContent ?? "";
+    const text =
+      render(<Tip task={task("T1", { cycle: { number: 3, state: "current" } })} x={0} y={0} waitsFor={[]} blocks={[]} />).container
+        .textContent ?? "";
 
     expect(text).toContain("Cycle: 3");
     expect(text).not.toContain("(current)");
@@ -272,7 +299,8 @@ describe("toasts", () => {
         useAutoHide(n, clear);
         return null;
       };
-      const ok = mock(noop), failed = mock(noop);
+      const ok = mock(noop),
+        failed = mock(noop);
       render(<Probe n={notice(false)} clear={ok} />);
       render(<Probe n={notice(true)} clear={failed} />);
 
@@ -290,7 +318,12 @@ describe("toasts", () => {
 
 describe("refresh", () => {
   test("a summary with nothing in it reads up to date", () => {
-    expect(describeRefresh({ changes: [], added: [], errors: {} })).toEqual({ kind: "done", title: "Up to date", lines: [], failed: false });
+    expect(describeRefresh({ changes: [], added: [], errors: {} })).toEqual({
+      kind: "done",
+      title: "Up to date",
+      lines: [],
+      failed: false,
+    });
   });
 
   test("a summary lists every change, new task and failed source", () => {
@@ -315,7 +348,9 @@ describe("refresh", () => {
     await waitFor(() => expect(container.textContent).toContain("Refreshing…"));
     expect((getByLabelText("Refresh") as HTMLButtonElement).disabled).toBe(true);
 
-    await act(async () => reply(Response.json({ summary: { changes: [{ id: "T1", from: "Todo", to: "Done" }], added: [], errors: {} }, board: next })));
+    await act(async () =>
+      reply(Response.json({ summary: { changes: [{ id: "T1", from: "Todo", to: "Done" }], added: [], errors: {} }, board: next })),
+    );
     await waitFor(() => expect(container.textContent).toContain("1 changed"));
     expect(onBoard).toHaveBeenCalledWith(next);
     expect(globalThis.fetch).toHaveBeenCalledWith("/api/refresh", { method: "POST" });
@@ -368,7 +403,17 @@ describe("Arrows", () => {
       for (const [j, id] of l.ids.entries()) {
         const card = document.createElement("a");
         card.dataset.id = id;
-        card.getBoundingClientRect = () => ({ left: j * 200, top: i * 100, right: j * 200 + 100, bottom: i * 100 + 40, width: 100, height: 40, x: j * 200, y: i * 100, toJSON() {} });
+        card.getBoundingClientRect = () => ({
+          left: j * 200,
+          top: i * 100,
+          right: j * 200 + 100,
+          bottom: i * 100 + 40,
+          width: 100,
+          height: 40,
+          x: j * 200,
+          y: i * 100,
+          toJSON() {},
+        });
         root.appendChild(card);
       }
     }
@@ -376,14 +421,30 @@ describe("Arrows", () => {
     return root;
   }
   const drawn = (c: Element) =>
-    [...c.querySelectorAll("svg > path")].map((p) => (p.getAttribute("marker-end") === "url(#mS)" ? "seq" : p.getAttribute("stroke-dasharray") ? "inlane" : "cross"));
+    [...c.querySelectorAll("svg > path")].map((p) =>
+      p.getAttribute("marker-end") === "url(#mS)" ? "seq" : p.getAttribute("stroke-dasharray") ? "inlane" : "cross",
+    );
 
-  const b = board([lane("A", ["T1", "T2", "T3"]), lane("B", ["T4"])], [], [["T1", "T3"], ["T2", "T4"]]);
-  const laneOf = new Map([["T1", "A"], ["T2", "A"], ["T3", "A"], ["T4", "B"]]);
+  const b = board(
+    [lane("A", ["T1", "T2", "T3"]), lane("B", ["T4"])],
+    [],
+    [
+      ["T1", "T3"],
+      ["T2", "T4"],
+    ],
+  );
+  const laneOf = new Map([
+    ["T1", "A"],
+    ["T2", "A"],
+    ["T3", "A"],
+    ["T4", "B"],
+  ]);
 
   test("draws a sequence line between neighbors, and a curve for each cross-lane blocker", () => {
     const root = rootWith(b);
-    const { container } = render(<Arrows root={{ current: root as HTMLDivElement }} board={b} laneOf={laneOf} showInLane={false} layoutKey={0} />);
+    const { container } = render(
+      <Arrows root={{ current: root as HTMLDivElement }} board={b} laneOf={laneOf} showInLane={false} layoutKey={0} />,
+    );
 
     expect(drawn(container)).toEqual(["seq", "seq", "cross"]);
     expect(container.querySelectorAll("svg > path")[0]?.getAttribute("d")).toBe("M102,20 L197,20");

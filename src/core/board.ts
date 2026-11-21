@@ -7,7 +7,6 @@ import { CYCLE_STATES, type Board, type Cycle, type CycleState, type Task, type 
 const cycleOf = (n: number | null, s: string | null): Cycle | null =>
   n !== null && CYCLE_STATES.includes(s as CycleState) ? { number: n, state: s as CycleState } : null;
 
-
 /** Reads lanes, tasks and edges as one board, lanes in order and tasks by position. */
 export async function readBoard(): Promise<Board> {
   const [lanes, placed, rows, edges] = await Promise.all([
@@ -20,7 +19,17 @@ export async function readBoard(): Promise<Board> {
   const tasks: Record<string, Task> = {};
   for (const r of rows) {
     const meta = JSON.parse(r.meta) as TaskMeta;
-    tasks[r.id] = { ...meta, id: r.id, source: r.source, title: r.title, status: r.status, url: r.url, closed: r.closed === 1, cycle: cycleOf(r.cycle_number, r.cycle_state), tone: toneOf(r.status) };
+    tasks[r.id] = {
+      ...meta,
+      id: r.id,
+      source: r.source,
+      title: r.title,
+      status: r.status,
+      url: r.url,
+      closed: r.closed === 1,
+      cycle: cycleOf(r.cycle_number, r.cycle_state),
+      tone: toneOf(r.status),
+    };
   }
 
   const byLane = new Map<string, string[]>(lanes.map((l) => [l.key, []]));

@@ -9,7 +9,10 @@ const moveBody = z
   .object({
     id: z.string().min(1),
     lane: z.string().min(1),
-    at: z.object({ id: z.string().min(1), side: z.enum(["before", "after"]) }).strict().optional(),
+    at: z
+      .object({ id: z.string().min(1), side: z.enum(["before", "after"]) })
+      .strict()
+      .optional(),
   })
   .strict();
 

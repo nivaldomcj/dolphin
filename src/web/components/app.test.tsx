@@ -20,11 +20,16 @@ afterEach(() => {
   (globalThis.fetch as unknown as { mockRestore?: () => void }).mockRestore?.();
 });
 
-const serve = (b: Board | Response) => spyOn(globalThis, "fetch").mockImplementation((async () => (b instanceof Response ? b : Response.json(b))) as unknown as typeof fetch);
+const serve = (b: Board | Response) =>
+  spyOn(globalThis, "fetch").mockImplementation((async () => (b instanceof Response ? b : Response.json(b))) as unknown as typeof fetch);
 
 const demo = board(
   [lane("A", ["ENG-1", "ENG-2"]), lane("B", ["ENG-3"]), lane("N", ["ENG-9"])],
-  [task("ENG-1", { title: "Passkey sign in" }), task("ENG-2", { title: "Old thing", closed: true }), task("ENG-3", { title: "Rate limit" })],
+  [
+    task("ENG-1", { title: "Passkey sign in" }),
+    task("ENG-2", { title: "Old thing", closed: true }),
+    task("ENG-3", { title: "Rate limit" }),
+  ],
   [["ENG-1", "ENG-3"]],
 );
 

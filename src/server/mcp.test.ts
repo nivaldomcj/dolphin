@@ -11,10 +11,25 @@ let client: Client;
 beforeEach(async () => {
   for (const table of ["edge", "placement", "task", "lane"] as const) await db.deleteFrom(table).execute();
   await writeRules({ text: "", pins: [] });
-  await db.insertInto("lane").values([{ key: "A", name: "a", bg: "", head: "", ord: 0 }, { key: "B", name: "b", bg: "", head: "", ord: 1 }]).execute();
+  await db
+    .insertInto("lane")
+    .values([
+      { key: "A", name: "a", bg: "", head: "", ord: 0 },
+      { key: "B", name: "b", bg: "", head: "", ord: 1 },
+    ])
+    .execute();
   const task = (id: string) => ({ id, source: "linear" as const, title: id, status: "Todo", url: "", meta: "{}" });
-  await db.insertInto("task").values([task("T1"), task("T2")]).execute();
-  await db.insertInto("placement").values([{ task_id: "T1", lane_key: "A", pos: 0 }, { task_id: "T2", lane_key: "A", pos: 1 }]).execute();
+  await db
+    .insertInto("task")
+    .values([task("T1"), task("T2")])
+    .execute();
+  await db
+    .insertInto("placement")
+    .values([
+      { task_id: "T1", lane_key: "A", pos: 0 },
+      { task_id: "T2", lane_key: "A", pos: 1 },
+    ])
+    .execute();
 
   const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
   await buildServer().connect(serverSide);
@@ -50,7 +65,10 @@ test("get_board returns the rules, the warnings and the lanes in one reply", asy
 
   expect(board.rules).toEqual({ text: "", pins: [] });
   expect(board.warnings).toEqual([]);
-  expect(board.lanes.map((l: { key: string; ids: string[] }) => [l.key, l.ids])).toEqual([["A", ["T1", "T2"]], ["B", []]]);
+  expect(board.lanes.map((l: { key: string; ids: string[] }) => [l.key, l.ids])).toEqual([
+    ["A", ["T1", "T2"]],
+    ["B", []],
+  ]);
 });
 
 test("place_task moves the task and reports it", async () => {
@@ -97,7 +115,12 @@ test("the HTTP endpoint answers a stateless JSON-RPC call", async () => {
     new Request("http://localhost/mcp", {
       method: "POST",
       headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "t", version: "0" } } }),
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "t", version: "0" } },
+      }),
     }),
   );
 
@@ -115,7 +138,11 @@ test("reorder_lane sets the full order of a lane", async () => {
 test("unplace_task takes a task out of its lane, into lane N", async () => {
   expect(json(await call("unplace_task", { id: "T1" }))).toEqual({ done: "T1 removed from lane A.", warnings: [] });
   const lanes = json(await call("get_board")).lanes.map((l: { key: string; ids: string[] }) => [l.key, l.ids]);
-  expect(lanes).toEqual([["A", ["T2"]], ["B", []], ["N", ["T1"]]]);
+  expect(lanes).toEqual([
+    ["A", ["T2"]],
+    ["B", []],
+    ["N", ["T1"]],
+  ]);
 });
 
 test("remove_edge deletes a dependency, and says when there was none", async () => {

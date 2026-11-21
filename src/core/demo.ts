@@ -62,15 +62,29 @@ export async function seedDemo(): Promise<{ lanes: number; tasks: number }> {
           const [status, closed] = T[s]!;
           const github = id.startsWith("SITE-");
           const url = github ? `https://github.com/example-org/docs/issues/${id.slice(5)}` : `https://linear.app/acme/issue/${id}`;
-          return { id, source: github ? ("github" as const) : ("linear" as const), title, status, url, closed: closed ? 1 : 0, meta: JSON.stringify(meta) };
+          return {
+            id,
+            source: github ? ("github" as const) : ("linear" as const),
+            title,
+            status,
+            url,
+            closed: closed ? 1 : 0,
+            meta: JSON.stringify(meta),
+          };
         }),
       )
       .execute();
     for (const [ord, [key, name, bg, head, ids]] of lanes.entries()) {
       await trx.insertInto("lane").values({ key, name, bg, head, ord }).execute();
-      await trx.insertInto("placement").values(ids.map((task_id, pos) => ({ task_id, lane_key: key, pos }))).execute();
+      await trx
+        .insertInto("placement")
+        .values(ids.map((task_id, pos) => ({ task_id, lane_key: key, pos })))
+        .execute();
     }
-    await trx.insertInto("edge").values(edges.map(([a, b]) => ({ a, b }))).execute();
+    await trx
+      .insertInto("edge")
+      .values(edges.map(([a, b]) => ({ a, b })))
+      .execute();
   });
 
   await writeRules({

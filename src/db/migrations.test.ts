@@ -16,7 +16,8 @@ const open = () => {
 afterEach(() => db.destroy());
 
 const tables = async () => (await db.introspection.getTables()).map((t) => t.name).sort();
-const columns = async (table: string) => (await db.introspection.getTables()).find((t) => t.name === table)?.columns.map((c) => c.name) ?? [];
+const columns = async (table: string) =>
+  (await db.introspection.getTables()).find((t) => t.name === table)?.columns.map((c) => c.name) ?? [];
 
 test("migrating up creates the tables and the cycle columns", async () => {
   const { error, results } = await open().migrateToLatest();

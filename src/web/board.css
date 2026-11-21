@@ -41,105 +41,355 @@
   --seq: #6e6e7c;
   --blk: #7b93ff;
 }
-html, body, #app { height: 100%; }
+html,
+body,
+#app {
+  height: 100%;
+}
 /* Only the board scrolls: an overlay past the window edge (a tooltip) must not add a page scrollbar. */
-html, body { overflow: hidden; }
-body { font-size: 14px; line-height: 1.4; background: var(--bg); color: var(--fg); }
-#app { display: flex; flex-direction: column; }
+html,
+body {
+  overflow: hidden;
+}
+body {
+  font-size: 14px;
+  line-height: 1.4;
+  background: var(--bg);
+  color: var(--fg);
+}
+#app {
+  display: flex;
+  flex-direction: column;
+}
 
-.sw { background: var(--fill); display: inline-block; width: 22px; height: 14px; border: 1.5px solid var(--card-border); border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
-.sw.dash { border-style: dashed; background: var(--board-bg); }
-.ln { display: inline-block; width: 26px; height: 0; border-top: 2px solid; vertical-align: 3px; margin-right: 4px; }
+.sw {
+  background: var(--fill);
+  display: inline-block;
+  width: 22px;
+  height: 14px;
+  border: 1.5px solid var(--card-border);
+  border-radius: 3px;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+.sw.dash {
+  border-style: dashed;
+  background: var(--board-bg);
+}
+.ln {
+  display: inline-block;
+  width: 26px;
+  height: 0;
+  border-top: 2px solid;
+  vertical-align: 3px;
+  margin-right: 4px;
+}
 
-.scroller { flex: 1; overflow: auto; }
-.board { position: relative; display: flex; flex-direction: column; min-width: 100%; width: max-content; min-height: 100%; background: var(--board-bg); }
-.lane { flex: 1; display: flex; align-items: stretch; border-top: 1px solid var(--line);
-        background: var(--lane-bg); }
-.lane-head { background: var(--lane-head); }
+.scroller {
+  flex: 1;
+  overflow: auto;
+}
+.board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 100%;
+  width: max-content;
+  min-height: 100%;
+  background: var(--board-bg);
+}
+.lane {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--line);
+  background: var(--lane-bg);
+}
+.lane-head {
+  background: var(--lane-head);
+}
 /*
  * Dark mode. Lane colors come from the data as pastels: keep each hue but at a dark lightness and low chroma, so a
  * warm hue reads as a tinted grey rather than brown. Each card is a raised surface whose border is a lighter shade of
  * its own status fill, instead of one blue outline for every card.
  */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .lane { background: oklch(from var(--lane-head) 0.225 calc(c * 0.28) h); }
-  :root:not([data-theme="light"]) .lane-head { background: oklch(from var(--lane-head) 0.27 calc(c * 0.42) h); }
-  :root:not([data-theme="light"]) .lane-head:hover { filter: brightness(1.12); }
-  :root:not([data-theme="light"]) .card, :root:not([data-theme="light"]) .sw { border-color: oklch(from var(--fill, var(--s-todo)) calc(l + 0.16) calc(c * 1.3) h); }
-  :root:not([data-theme="light"]) .tip { background: oklch(0.27 0.012 265); border: 1px solid oklch(0.38 0.012 265); }
+  :root:not([data-theme="light"]) .lane {
+    background: oklch(from var(--lane-head) 0.225 calc(c * 0.28) h);
+  }
+  :root:not([data-theme="light"]) .lane-head {
+    background: oklch(from var(--lane-head) 0.27 calc(c * 0.42) h);
+  }
+  :root:not([data-theme="light"]) .lane-head:hover {
+    filter: brightness(1.12);
+  }
+  :root:not([data-theme="light"]) .card,
+  :root:not([data-theme="light"]) .sw {
+    border-color: oklch(from var(--fill, var(--s-todo)) calc(l + 0.16) calc(c * 1.3) h);
+  }
+  :root:not([data-theme="light"]) .tip {
+    background: oklch(0.27 0.012 265);
+    border: 1px solid oklch(0.38 0.012 265);
+  }
 }
-:root[data-theme="dark"] .lane { background: oklch(from var(--lane-head) 0.225 calc(c * 0.28) h); }
-:root[data-theme="dark"] .lane-head { background: oklch(from var(--lane-head) 0.27 calc(c * 0.42) h); }
-:root[data-theme="dark"] .lane-head:hover { filter: brightness(1.12); }
-:root[data-theme="dark"] .card, :root[data-theme="dark"] .sw { border-color: oklch(from var(--fill, var(--s-todo)) calc(l + 0.16) calc(c * 1.3) h); }
-:root[data-theme="dark"] .tip { background: oklch(0.27 0.012 265); border: 1px solid oklch(0.38 0.012 265); }
-.lane:first-child { border-top: 0; }
-.lane-head { position: sticky; left: 0; z-index: 3; width: 190px; min-width: 190px; padding: 10px 12px; font-weight: 600;
-             display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--line); }
-.lane-head small { font-weight: 400; color: var(--muted); }
-.lane-head { text-align: left; cursor: pointer; font: inherit; font-weight: 600; color: inherit; }
-.lane-head:hover { filter: brightness(0.96); }
+:root[data-theme="dark"] .lane {
+  background: oklch(from var(--lane-head) 0.225 calc(c * 0.28) h);
+}
+:root[data-theme="dark"] .lane-head {
+  background: oklch(from var(--lane-head) 0.27 calc(c * 0.42) h);
+}
+:root[data-theme="dark"] .lane-head:hover {
+  filter: brightness(1.12);
+}
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .sw {
+  border-color: oklch(from var(--fill, var(--s-todo)) calc(l + 0.16) calc(c * 1.3) h);
+}
+:root[data-theme="dark"] .tip {
+  background: oklch(0.27 0.012 265);
+  border: 1px solid oklch(0.38 0.012 265);
+}
+.lane:first-child {
+  border-top: 0;
+}
+.lane-head {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  width: 190px;
+  min-width: 190px;
+  padding: 10px 12px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 1px solid var(--line);
+}
+.lane-head small {
+  font-weight: 400;
+  color: var(--muted);
+}
+.lane-head {
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+}
+.lane-head:hover {
+  filter: brightness(0.96);
+}
 /* A collapsed lane keeps only its header line; the other lanes share the freed height. */
-.lane.collapsed { flex: 0 0 auto; }
-.lane.collapsed .lane-head { padding-top: 6px; padding-bottom: 6px; }
-.cards { flex: 1; display: flex; gap: 34px; padding: 22px 24px; align-items: center; }
+.lane.collapsed {
+  flex: 0 0 auto;
+}
+.lane.collapsed .lane-head {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.cards {
+  flex: 1;
+  display: flex;
+  gap: 34px;
+  padding: 22px 24px;
+  align-items: center;
+}
 
-.card { background: var(--fill); position: relative; z-index: 2; width: 190px; padding: 9px 10px; font-weight: 600; font-size: 13px;
-        border: 1.5px solid var(--card-border); border-radius: 5px; text-decoration: none; color: var(--card-fg); box-shadow: var(--card-shadow);
-        transition: transform 0.1s, box-shadow 0.1s, opacity 0.15s; }
-.card .id { display: block; }
-.card .ttl { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-             margin-top: 3px; font-size: 11.5px; font-weight: 400; line-height: 1.3; }
-.card .pos { position: absolute; top: -9px; left: -7px; font-size: 10px; font-weight: 500; color: var(--muted); }
-.card.umbrella { border-style: dashed; }
-.card.closed { opacity: 0.45; }
+.card {
+  background: var(--fill);
+  position: relative;
+  z-index: 2;
+  width: 190px;
+  padding: 9px 10px;
+  font-weight: 600;
+  font-size: 13px;
+  border: 1.5px solid var(--card-border);
+  border-radius: 5px;
+  text-decoration: none;
+  color: var(--card-fg);
+  box-shadow: var(--card-shadow);
+  transition:
+    transform 0.1s,
+    box-shadow 0.1s,
+    opacity 0.15s;
+}
+.card .id {
+  display: block;
+}
+.card .ttl {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 3px;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+.card .pos {
+  position: absolute;
+  top: -9px;
+  left: -7px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.card.umbrella {
+  border-style: dashed;
+}
+.card.closed {
+  opacity: 0.45;
+}
 /* A task planned for another cycle: striped fill, dotted violet border, and its cycle number in the corner. */
-.card.other-cycle { border-width: 2px; border-style: dotted;
+.card.other-cycle {
+  border-width: 2px;
+  border-style: dotted;
   /* biome-ignore lint/complexity/noImportantStyles: beats the dark-theme border, which has higher specificity. */
   border-color: #8b5cf6 !important;
-  background: repeating-linear-gradient(135deg, var(--fill) 0 10px, color-mix(in oklab, var(--fill), #8b5cf6 14%) 10px 20px); }
-.card .cyc { position: absolute; top: -9px; right: -7px; padding: 0 5px; border-radius: 8px; font-size: 10px; font-weight: 700;
-  color: #fff; background: #8b5cf6; }
-.card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); }
-.card.dim { opacity: 0.25; }
-.card.hit { box-shadow: 0 0 0 4px #ff9f1c; }
-.card.current { box-shadow: 0 0 0 4px #ff9f1c, 0 0 0 8px rgba(255, 159, 28, 0.35); transform: translateY(-2px); }
-.card.rel-up { box-shadow: 0 0 0 4px var(--ring-up); }
-.card.rel-down { box-shadow: 0 0 0 4px #2bb673; }
+  background: repeating-linear-gradient(135deg, var(--fill) 0 10px, color-mix(in oklab, var(--fill), #8b5cf6 14%) 10px 20px);
+}
+.card .cyc {
+  position: absolute;
+  top: -9px;
+  right: -7px;
+  padding: 0 5px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: #8b5cf6;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover);
+}
+.card.dim {
+  opacity: 0.25;
+}
+.card.hit {
+  box-shadow: 0 0 0 4px #ff9f1c;
+}
+.card.current {
+  box-shadow:
+    0 0 0 4px #ff9f1c,
+    0 0 0 8px rgba(255, 159, 28, 0.35);
+  transform: translateY(-2px);
+}
+.card.rel-up {
+  box-shadow: 0 0 0 4px var(--ring-up);
+}
+.card.rel-down {
+  box-shadow: 0 0 0 4px #2bb673;
+}
 /* Alt + drag: the dragged card fades, a bar marks the gap it would drop into, and a tag with its id follows the pointer. */
-.card.dragging { opacity: 0.35; }
-.card.drop-before::after, .card.drop-after::after { content: ""; position: absolute; top: -8px; bottom: -8px; width: 3px;
-                                                    border-radius: 2px; background: var(--blk); pointer-events: none; }
+.card.dragging {
+  opacity: 0.35;
+}
+.card.drop-before::after,
+.card.drop-after::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--blk);
+  pointer-events: none;
+}
 /* Centred in the 34px gap between cards, past the 1.5px border. */
-.card.drop-before::after { left: -20px; }
-.card.drop-after::after { right: -20px; }
-.lane.drop-end { box-shadow: inset 0 0 0 3px var(--blk); }
-.drag-ghost { position: fixed; z-index: 30; pointer-events: none; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;
-              background: var(--blk); color: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); }
-body.moving, body.moving * {
+.card.drop-before::after {
+  left: -20px;
+}
+.card.drop-after::after {
+  right: -20px;
+}
+.lane.drop-end {
+  box-shadow: inset 0 0 0 3px var(--blk);
+}
+.drag-ghost {
+  position: fixed;
+  z-index: 30;
+  pointer-events: none;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--blk);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+body.moving,
+body.moving * {
   /* biome-ignore lint/complexity/noImportantStyles: every element under the pointer, links included, shows the grab cursor during a drag. */
-  cursor: grabbing !important; user-select: none; }
-body.moving .card:hover { transform: none; }
-.notitle .card { width: auto; min-width: 104px; text-align: center; }
-.notitle .card .ttl { display: none; }
-.nopos .card .pos { display: none; }
+  cursor: grabbing !important;
+  user-select: none;
+}
+body.moving .card:hover {
+  transform: none;
+}
+.notitle .card {
+  width: auto;
+  min-width: 104px;
+  text-align: center;
+}
+.notitle .card .ttl {
+  display: none;
+}
+.nopos .card .pos {
+  display: none;
+}
 
-svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
+svg.arrows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
 
 /* max-content: a fixed box near the window edge would shrink to fit, so Tip would measure (and place) a squeezed card. */
-.tip { position: fixed; z-index: 10; width: max-content; max-width: min(360px, calc(100vw - 16px)); background: #1d1d24; color: #fff; padding: 10px 12px; border-radius: 6px;
-       font-size: 12px; line-height: 1.45; pointer-events: none; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
-.tip b { font-size: 13px; }
-.tip .k { color: #b8b8c8; }
-.empty { padding: 32px; color: var(--muted); }
+.tip {
+  position: fixed;
+  z-index: 10;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 16px));
+  background: #1d1d24;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+.tip b {
+  font-size: 13px;
+}
+.tip .k {
+  color: #b8b8c8;
+}
+.empty {
+  padding: 32px;
+  color: var(--muted);
+}
 
 /*
  * Privacy mode, for screenshots: task titles and lane names are not painted at all (transparent text under solid
  * bars, one per line), and the hover card is hidden. A blur would keep the glyph shapes, which can be recovered.
  */
-:root { --redact: rgba(0, 0, 0, 0.16); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --redact: rgba(255, 255, 255, 0.18); } }
-:root[data-theme="dark"] { --redact: rgba(255, 255, 255, 0.18); }
+:root {
+  --redact: rgba(0, 0, 0, 0.16);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --redact: rgba(255, 255, 255, 0.18);
+  }
+}
+:root[data-theme="dark"] {
+  --redact: rgba(255, 255, 255, 0.18);
+}
 body.private .sensitive {
   /* Forced-colors mode would repaint transparent text and drop the bars, revealing it. */
   forced-color-adjust: none;
@@ -148,8 +398,17 @@ body.private .sensitive {
   user-select: none;
   background: repeating-linear-gradient(to bottom, var(--redact) 0 calc(1lh - 0.4em), transparent calc(1lh - 0.4em) 1lh);
 }
-body.private .tip { display: none; }
+body.private .tip {
+  display: none;
+}
 /* The search box hides its text but stays usable: keep the caret, the placeholder and selection. */
-body.private input.sensitive { caret-color: var(--fg); user-select: auto; }
-body.private input.sensitive::placeholder { color: var(--muted); }
-body.private .sensitive::selection { color: transparent; }
+body.private input.sensitive {
+  caret-color: var(--fg);
+  user-select: auto;
+}
+body.private input.sensitive::placeholder {
+  color: var(--muted);
+}
+body.private .sensitive::selection {
+  color: transparent;
+}

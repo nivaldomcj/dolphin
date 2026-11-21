@@ -41,7 +41,9 @@ export function App() {
     const id = search.current;
     if (!id) return;
     const scroll = () =>
-      boardRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      boardRef.current
+        ?.querySelector(`[data-id="${CSS.escape(id)}"]`)
+        ?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     const key = laneOf.get(id);
     if (key && lanesRef.current.collapsed.has(key)) {
       lanesRef.current.setCollapsed(key, false);
@@ -84,7 +86,13 @@ export function App() {
         {board && board.lanes.length === 0 && <p class="empty">The board is empty. Run `bun run import &lt;data.json&gt;`.</p>}
         {board && (
           <div class="board" ref={boardRef}>
-            <Arrows root={boardRef} board={board} laneOf={laneOf} showInLane={display.inLane} layoutKey={`${display.titles}|${display.completed}|${display.otherCycles}|${lanes.key}|${extraN}`} />
+            <Arrows
+              root={boardRef}
+              board={board}
+              laneOf={laneOf}
+              showInLane={display.inLane}
+              layoutKey={`${display.titles}|${display.completed}|${display.otherCycles}|${lanes.key}|${extraN}`}
+            />
             {shownLanes.map((lane) => (
               <Lane
                 key={lane.key}
@@ -108,7 +116,9 @@ export function App() {
         )}
       </div>
       {display.legend && <Legend />}
-      {hover && focused && <Tip task={focused} x={hover.x} y={hover.y} waitsFor={up.get(hover.id) ?? []} blocks={down.get(hover.id) ?? []} />}
+      {hover && focused && (
+        <Tip task={focused} x={hover.x} y={hover.y} waitsFor={up.get(hover.id) ?? []} blocks={down.get(hover.id) ?? []} />
+      )}
       {move.drag && (
         <div class="drag-ghost" style={{ left: `${move.drag.x + 14}px`, top: `${move.drag.y + 12}px` }}>
           {move.drag.id}
@@ -122,4 +132,3 @@ export function App() {
     </>
   );
 }
-

@@ -14,14 +14,25 @@ type Reply = { status?: number; body: unknown };
 
 /** Answers the lookup queries with `lookups` in order, then one page of assigned issues (or `assignedReply`). */
 function mockLinear(lookups: Reply[], assigned: unknown[] = [], assignedReply?: Reply) {
-  const replies = [...lookups, assignedReply ?? { body: { data: { viewer: { assignedIssues: { nodes: assigned, pageInfo: { hasNextPage: false, endCursor: null } } } } } }];
+  const replies = [
+    ...lookups,
+    assignedReply ?? {
+      body: { data: { viewer: { assignedIssues: { nodes: assigned, pageInfo: { hasNextPage: false, endCursor: null } } } } },
+    },
+  ];
   return spyOn(globalThis, "fetch").mockImplementation((async () => {
     const r = replies.shift()!;
     return new Response(JSON.stringify(r.body), { status: r.status ?? 200 });
   }) as unknown as typeof fetch);
 }
 
-const issue = (id: string, uuid = `uuid-${id}`) => ({ id: uuid, identifier: id, title: id, url: `https://linear.app/x/${id}`, state: { name: "Todo", type: "unstarted" } });
+const issue = (id: string, uuid = `uuid-${id}`) => ({
+  id: uuid,
+  identifier: id,
+  title: id,
+  url: `https://linear.app/x/${id}`,
+  state: { name: "Todo", type: "unstarted" },
+});
 const notFound = (alias: string) => ({ message: "Entity not found: Issue", path: [alias] });
 
 afterEach(() => {
@@ -29,7 +40,10 @@ afterEach(() => {
 });
 
 test("drops the ids Linear reports not found and asks again for the rest", async () => {
-  const spy = mockLinear([{ status: 400, body: { data: null, errors: [notFound("i1")] } }, { body: { data: { i0: issue("A-1"), i1: issue("A-3") } } }]);
+  const spy = mockLinear([
+    { status: 400, body: { data: null, errors: [notFound("i1")] } },
+    { body: { data: { i0: issue("A-1"), i1: issue("A-3") } } },
+  ]);
 
   const result = await fetchLinear(["A-1", "A-2", "A-3"]);
 
@@ -82,11 +96,10 @@ test("an alias that only looks like one in the batch (i01) fails instead of clos
 });
 
 test("a failing assigned page keeps the confirmed lookups and reports the error, closing nothing", async () => {
-  mockLinear(
-    [{ status: 400, body: { data: null, errors: [notFound("i1")] } }, { body: { data: { i0: issue("A-1") } } }],
-    [],
-    { status: 502, body: { errors: [{ message: "Bad gateway" }] } },
-  );
+  mockLinear([{ status: 400, body: { data: null, errors: [notFound("i1")] } }, { body: { data: { i0: issue("A-1") } } }], [], {
+    status: 502,
+    body: { errors: [{ message: "Bad gateway" }] },
+  });
 
   const result = await fetchLinear(["A-1", "A-2"]);
 

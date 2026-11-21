@@ -25,7 +25,15 @@ interface CardProps {
 
 function Card({ task, pos, mark, dragging, side, onFocus, onMove, onBlur, onGrab, onCardClick, onCardDragStart }: CardProps) {
   const other = inOtherCycle(task);
-  const classes = ["card", task.kind === "umbrella" && "umbrella", task.closed && "closed", other && "other-cycle", mark, dragging && "dragging", side]
+  const classes = [
+    "card",
+    task.kind === "umbrella" && "umbrella",
+    task.closed && "closed",
+    other && "other-cycle",
+    mark,
+    dragging && "dragging",
+    side,
+  ]
     .filter(Boolean)
     .join(" ");
   return (
@@ -44,7 +52,11 @@ function Card({ task, pos, mark, dragging, side, onFocus, onMove, onBlur, onGrab
       onDragStart={onCardDragStart}
     >
       <span class="pos">{pos}</span>
-      {other && task.cycle && <span class="cyc" title={`Cycle ${task.cycle.number} (${task.cycle.state})`}>C{task.cycle.number}</span>}
+      {other && task.cycle && (
+        <span class="cyc" title={`Cycle ${task.cycle.number} (${task.cycle.state})`}>
+          C{task.cycle.number}
+        </span>
+      )}
       <span class="id">{task.id}</span>
       <span class="ttl sensitive">{task.title}</span>
     </a>
@@ -79,13 +91,18 @@ export function Lane({ lane, tasks, markOf, collapsed, onToggle, hide, dragId, d
       <button type="button" class="lane-head" aria-expanded={!collapsed} onClick={onToggle}>
         {collapsed ? (
           <span>
-            ▸ Lane {lane.key} <small>· {count} {count === 1 ? "task" : "tasks"}</small>
+            ▸ Lane {lane.key}{" "}
+            <small>
+              · {count} {count === 1 ? "task" : "tasks"}
+            </small>
           </span>
         ) : (
           <>
             <span>▾ Lane {lane.key}</span>
             <small class="sensitive">{lane.name}</small>
-            <small>{count} {count === 1 ? "task" : "tasks"}</small>
+            <small>
+              {count} {count === 1 ? "task" : "tasks"}
+            </small>
           </>
         )}
       </button>
