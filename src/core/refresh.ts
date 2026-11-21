@@ -103,7 +103,8 @@ export function createRefresh(sources: Sources, deadlineMs = DEADLINE_MS): () =>
     const current: Promise<RefreshSummary> = run(sources, deadlineMs).finally(() => {
       if (running === current) running = null;
     });
-    return (running = current);
+    running = current;
+    return current;
   };
   return () => {
     // A queued run is joined first: between one run ending and the queued one starting, `running` is already null.

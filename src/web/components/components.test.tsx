@@ -364,14 +364,14 @@ describe("Arrows", () => {
   function rootWith(b: ReturnType<typeof board>) {
     const root = document.createElement("div");
     root.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000, x: 0, y: 0, toJSON() {} });
-    b.lanes.forEach((l, i) =>
-      l.ids.forEach((id, j) => {
+    for (const [i, l] of b.lanes.entries()) {
+      for (const [j, id] of l.ids.entries()) {
         const card = document.createElement("a");
         card.dataset.id = id;
         card.getBoundingClientRect = () => ({ left: j * 200, top: i * 100, right: j * 200 + 100, bottom: i * 100 + 40, width: 100, height: 40, x: j * 200, y: i * 100, toJSON() {} });
         root.appendChild(card);
-      }),
-    );
+      }
+    }
     document.body.appendChild(root);
     return root;
   }

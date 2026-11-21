@@ -138,7 +138,11 @@ export function useMove(board: Board | null, setBoard: (b: Board) => void, scrol
     };
     const onMove = (ev: PointerEvent) => {
       // The button came up somewhere this page did not hear (another app, a dialog): where is unknown, so cancel.
-      if (ev.buttons === 0) return end(false), release();
+      if (ev.buttons === 0) {
+        end(false);
+        release();
+        return;
+      }
       if (!dragRef.current) {
         if (Math.hypot(ev.clientX - x0, ev.clientY - y0) < SLOP) return;
         update({ id, x: ev.clientX, y: ev.clientY, target: null });

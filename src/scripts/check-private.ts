@@ -34,7 +34,7 @@ if (args[0] === "--message") {
 }
 
 if (findings.length > 0) {
-  console.error("check:private found denylisted text:\n" + findings.map((f) => `  ${f}`).join("\n"));
+  console.error(`check:private found denylisted text:\n${findings.map((f) => `  ${f}`).join("\n")}`);
   process.exit(1);
 }
 console.log("check:private: clean.");
