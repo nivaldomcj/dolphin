@@ -4,15 +4,21 @@ import { type Notice, NoticeAlert, Toast, useAutoHide } from "./toast";
 
 type State = { kind: "busy" } | ({ kind: "done" } & Notice);
 
-/** The toast for a refresh summary: a short title, one line per change, new task and failed source. */
+/** The toast for a refresh summary: a short title, one line per change, new task, reassigned task and failed source. */
 export function describeRefresh(s: RefreshSummary): State {
   const errors = Object.entries(s.errors).map(([source, msg]) => `${source}: ${msg}`);
   const parts = [
     s.changes.length > 0 && `${s.changes.length} changed`,
     s.added.length > 0 && `${s.added.length} new`,
+    s.reassigned.length > 0 && `${s.reassigned.length} reassigned`,
     errors.length > 0 && `${errors.length} source failed`,
   ].filter(Boolean);
-  const lines = [...s.changes.map((c) => `${c.id}: ${c.from} → ${c.to}`), ...s.added.map((id) => `${id}: new, in lane N`), ...errors];
+  const lines = [
+    ...s.changes.map((c) => `${c.id}: ${c.from} → ${c.to}`),
+    ...s.added.map((id) => `${id}: new, in lane N`),
+    ...s.reassigned.map((r) => `${r.id}: ${r.to ? `reassigned to ${r.to}` : "unassigned"}, removed`),
+    ...errors,
+  ];
   return { kind: "done", title: parts.length > 0 ? parts.join(", ") : "Up to date", lines, failed: errors.length > 0 };
 }
 

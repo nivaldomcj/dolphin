@@ -89,6 +89,6 @@ test("POST /api/refresh replies with the summary and the board", async () => {
 
   expect(res.status).toBe(200);
   const body = (await res.json()) as { summary: unknown; board: Lanes };
-  expect(body.summary).toEqual({ changes: [], added: [], errors: {} });
+  expect(body.summary).toEqual({ changes: [], added: [], reassigned: [], errors: {} });
   expect(ids(body.board, "A")).toEqual(["T1", "T2"]);
 });

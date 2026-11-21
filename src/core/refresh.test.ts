@@ -43,7 +43,7 @@ test("writes status changes, adds new open tasks, skips new closed ones", async 
 
   const summary = await refresh();
 
-  expect(summary).toEqual({ changes: [{ id: "L1", from: "Todo", to: "Done" }], added: ["L2"], errors: {} });
+  expect(summary).toEqual({ changes: [{ id: "L1", from: "Todo", to: "Done" }], added: ["L2"], reassigned: [], errors: {} });
   const board = await readBoard();
   expect(board.tasks.L1).toMatchObject({ status: "Done", closed: true, note: "keep me" });
   expect(board.tasks.L3).toBeUndefined();
@@ -74,7 +74,7 @@ test("writes the cycle without reporting it as a change, and keeps it when the t
   });
   github = async () => [{ ...fact("G1", "Backlog"), source: "github" }];
 
-  expect(await refresh()).toEqual({ changes: [], added: ["L2"], errors: {} });
+  expect(await refresh()).toEqual({ changes: [], added: ["L2"], reassigned: [], errors: {} });
   let board = await readBoard();
   expect(board.tasks.L1?.cycle).toEqual({ number: 43, state: "next" });
   expect(board.tasks.L2?.cycle).toBeNull();
@@ -93,7 +93,7 @@ test("writes the cycle without reporting it as a change, and keeps it when the t
 test("a second refresh with the same facts changes nothing", async () => {
   linear = async () => ({ facts: [fact("L1", "In Progress")], missing: [] });
   await refresh();
-  expect(await refresh()).toEqual({ changes: [], added: [], errors: {} });
+  expect(await refresh()).toEqual({ changes: [], added: [], reassigned: [], errors: {} });
 });
 
 test("a task Linear no longer returns is closed and marked not found, once", async () => {
@@ -102,6 +102,24 @@ test("a task Linear no longer returns is closed and marked not found, once", asy
   expect((await refresh()).changes).toEqual([{ id: "L1", from: "Todo", to: NOT_FOUND }]);
   expect((await readBoard()).tasks.L1).toMatchObject({ status: NOT_FOUND, closed: true });
   expect((await refresh()).changes).toEqual([]);
+});
+
+test("a known task now assigned to someone else is removed with its placement and edges, and reported", async () => {
+  await db.insertInto("edge").values({ a: "L1", b: "G1" }).execute();
+  linear = async () => ({
+    facts: [
+      { ...fact("L1", "Todo"), reassignedTo: "Sam" },
+      { ...fact("L2", "Todo"), reassignedTo: null },
+    ],
+    missing: [],
+  });
+
+  expect(await refresh()).toEqual({ changes: [], added: [], reassigned: [{ id: "L1", to: "Sam" }], errors: {} });
+  const board = await readBoard();
+  expect(board.tasks.L1).toBeUndefined();
+  expect(board.tasks.L2).toBeUndefined();
+  expect(board.lanes.find((l) => l.key === "A")?.ids).toEqual(["G1"]);
+  expect(board.edges).toEqual([]);
 });
 
 test("a refresh asked for during a run gets a later run, shared by everyone who asked meanwhile", async () => {
@@ -116,7 +134,7 @@ test("a refresh asked for during a run gets a later run, shared by everyone who 
   expect(calls).toBe(2);
   expect(second).toBe(third);
   expect(first.changes).toEqual([{ id: "L1", from: "Todo", to: "In Progress" }]);
-  expect(second).toEqual({ changes: [{ id: "L1", from: "In Progress", to: "Done" }], added: [], errors: {} });
+  expect(second).toEqual({ changes: [{ id: "L1", from: "In Progress", to: "Done" }], added: [], reassigned: [], errors: {} });
 });
 
 test("two refreshes that both see a new task add it once", async () => {
@@ -180,13 +198,14 @@ test("partial Linear results apply, with the error reported and nothing closed a
   expect(summary).toEqual({
     changes: [{ id: "L1", from: "Todo", to: "In Progress" }],
     added: [],
+    reassigned: [],
     errors: { linear: "Linear API 502: no data" },
   });
 });
 
 test("the exported refresh reads the configured trackers and reports nothing when both are off", async () => {
   await withConfig(OFFLINE, async () => {
-    expect(await refreshNow()).toEqual({ changes: [], added: [], errors: {} });
+    expect(await refreshNow()).toEqual({ changes: [], added: [], reassigned: [], errors: {} });
     expect((await readBoard()).tasks.L1?.status).toBe("Todo");
   });
 });

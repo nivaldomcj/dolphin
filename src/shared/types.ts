@@ -60,6 +60,8 @@ export interface RefreshSummary {
   changes: { id: string; from: string; to: string }[];
   /** Open tasks the board did not know. They show in lane N until someone places them. */
   added: string[];
+  /** Known tasks now assigned to someone else (`to`, null when unassigned). They are removed from the board. */
+  reassigned: { id: string; to: string | null }[];
   /** A source that failed leaves its tasks untouched; the other source still applies. */
   errors: Partial<Record<Source, string>>;
 }

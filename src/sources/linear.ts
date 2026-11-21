@@ -4,7 +4,8 @@ import type { Fact } from "./types";
 
 const API = "https://api.linear.app/graphql";
 const KEYCHAIN_ITEM = "dolphin-linear-api-key";
-const FIELDS = "id identifier title url state { name type } cycle { number isActive isNext isPast isFuture completedAt }";
+const FIELDS =
+  "id identifier title url state { name type } assignee { id name } cycle { number isActive isNext isPast isFuture completedAt }";
 /** Linear state types that still need work. Everything else (completed, canceled, duplicate) is closed. */
 const OPEN_TYPES = ["triage", "backlog", "unstarted", "started"];
 
@@ -15,6 +16,7 @@ interface Issue {
   title: string;
   url: string;
   state: { name: string; type: string };
+  assignee: { id: string; name: string } | null;
   cycle: { number: number; isActive: boolean; isNext: boolean; isPast: boolean; isFuture: boolean; completedAt: string | null } | null;
 }
 
@@ -136,11 +138,16 @@ export async function fetchLinear(knownIds: string[], signal?: AbortSignal): Pro
 
   // Issues already answered, by stable id, so the assigned list below does not add a moved issue a second time.
   const answered = new Set<string>();
+  // Who each looked-up issue is assigned to, by the id the board asked for, and the issues the assigned list returned.
+  const assignees = new Map<string, Pick<Issue, "id" | "assignee">>();
+  const assigned = new Set<string>();
+  let viewer = "";
   try {
     for (let i = 0; i < knownIds.length; i += 50) {
       for (const [requested, issue] of await lookUp(key, knownIds.slice(i, i + 50), missing, signal)) {
         facts.set(requested, { ...toFact(issue), id: requested });
         answered.add(issue.id);
+        assignees.set(requested, issue);
       }
     }
 
@@ -148,15 +155,19 @@ export async function fetchLinear(knownIds: string[], signal?: AbortSignal): Pro
     do {
       const cursor: string = after ? `, after: ${JSON.stringify(after)}` : "";
       const result = await gql<{
-        viewer: { assignedIssues: { nodes: Issue[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } } };
+        viewer: { id: string; assignedIssues: { nodes: Issue[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } } };
       }>(
         key,
-        `{ viewer { assignedIssues(first: 100${cursor}, filter: { state: { type: { in: ${JSON.stringify(OPEN_TYPES)} } } }) { nodes { ${FIELDS} } pageInfo { hasNextPage endCursor } } } }`,
+        `{ viewer { id assignedIssues(first: 100${cursor}, filter: { state: { type: { in: ${JSON.stringify(OPEN_TYPES)} } } }) { nodes { ${FIELDS} } pageInfo { hasNextPage endCursor } } } }`,
         signal,
       );
       const data = result.data;
       if (result.status !== 200 || !data || result.errors.length) throw fail(result);
-      for (const issue of data.viewer.assignedIssues.nodes) if (!answered.has(issue.id)) facts.set(issue.identifier, toFact(issue));
+      viewer = data.viewer.id;
+      for (const issue of data.viewer.assignedIssues.nodes) {
+        assigned.add(issue.id);
+        if (!answered.has(issue.id)) facts.set(issue.identifier, toFact(issue));
+      }
       after = data.viewer.assignedIssues.pageInfo.hasNextPage ? data.viewer.assignedIssues.pageInfo.endCursor : null;
     } while (after);
   } catch (e) {
@@ -164,6 +175,13 @@ export async function fetchLinear(knownIds: string[], signal?: AbortSignal): Pro
     // because the assigned pages that did not load might have returned those ids.
     if (facts.size === 0) throw e;
     return { facts: [...facts.values()], missing: [], error: e instanceof Error ? e.message : String(e) };
+  }
+
+  // Only a complete assigned list proves who the viewer is, so the error path above marks nothing as reassigned.
+  // The assigned list read later than the lookup: an issue it returned is still the viewer's.
+  for (const [requested, issue] of assignees) {
+    if (issue.assignee?.id === viewer || assigned.has(issue.id)) continue;
+    facts.set(requested, { ...facts.get(requested)!, reassignedTo: issue.assignee?.name ?? null });
   }
 
   // The two queries can see different moments: an id the assigned list returned is not missing.

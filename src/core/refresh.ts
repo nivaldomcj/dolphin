@@ -37,6 +37,13 @@ async function apply(facts: Fact[], missing: string[], summary: RefreshSummary):
 
     for (const f of facts) {
       const k = known.get(f.id);
+      if (f.reassignedTo !== undefined) {
+        // Not the user's task any more: drop it, with its placement and edges (they cascade).
+        if (!k) continue;
+        await trx.deleteFrom("task").where("id", "=", f.id).execute();
+        summary.reassigned.push({ id: f.id, to: f.reassignedTo });
+        continue;
+      }
       if (!k) {
         if (f.closed) continue;
         const inserted = await trx
@@ -141,7 +148,7 @@ async function run(sources: Sources, deadlineMs: number): Promise<RefreshSummary
     withDeadline("Linear", deadlineMs, async (signal) => sources.fetchLinear(linearIds, signal)),
     withDeadline("GitHub", deadlineMs, async (signal) => sources.fetchGithub(signal)),
   ]);
-  const summary: RefreshSummary = { changes: [], added: [], errors: {} };
+  const summary: RefreshSummary = { changes: [], added: [], reassigned: [], errors: {} };
   const facts: Fact[] = [];
   let missing: string[] = [];
   if (linear.status === "fulfilled") {

@@ -17,7 +17,7 @@ function mockLinear(lookups: Reply[], assigned: unknown[] = [], assignedReply?: 
   const replies = [
     ...lookups,
     assignedReply ?? {
-      body: { data: { viewer: { assignedIssues: { nodes: assigned, pageInfo: { hasNextPage: false, endCursor: null } } } } },
+      body: { data: { viewer: { id: "me", assignedIssues: { nodes: assigned, pageInfo: { hasNextPage: false, endCursor: null } } } } },
     },
   ];
   return spyOn(globalThis, "fetch").mockImplementation((async () => {
@@ -26,12 +26,14 @@ function mockLinear(lookups: Reply[], assigned: unknown[] = [], assignedReply?: 
   }) as unknown as typeof fetch);
 }
 
-const issue = (id: string, uuid = `uuid-${id}`) => ({
+const me = { id: "me", name: "Me" };
+const issue = (id: string, uuid = `uuid-${id}`, assignee: { id: string; name: string } | null = me) => ({
   id: uuid,
   identifier: id,
   title: id,
   url: `https://linear.app/x/${id}`,
   state: { name: "Todo", type: "unstarted" },
+  assignee,
 });
 const notFound = (alias: string) => ({ message: "Entity not found: Issue", path: [alias] });
 
@@ -110,6 +112,38 @@ test("a failing assigned page keeps the confirmed lookups and reports the error,
 test("a failure before anything is confirmed still fails the whole fetch", async () => {
   mockLinear([{ status: 500, body: { errors: [{ message: "boom" }] } }]);
   await expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 500: boom");
+});
+
+test("a known issue now assigned to someone else, or to nobody, is marked reassigned", async () => {
+  mockLinear([
+    { body: { data: { i0: issue("A-1"), i1: issue("A-2", undefined, { id: "sam", name: "Sam" }), i2: issue("A-3", undefined, null) } } },
+  ]);
+
+  const { facts } = await fetchLinear(["A-1", "A-2", "A-3"]);
+
+  expect(facts.map((f) => [f.id, f.reassignedTo])).toEqual([
+    ["A-1", undefined],
+    ["A-2", "Sam"],
+    ["A-3", null],
+  ]);
+});
+
+test("an issue the later assigned list still returns is not marked reassigned", async () => {
+  mockLinear([{ body: { data: { i0: issue("A-1", "u1", { id: "sam", name: "Sam" }) } } }], [issue("A-1", "u1")]);
+
+  expect((await fetchLinear(["A-1"])).facts[0]?.reassignedTo).toBeUndefined();
+});
+
+test("a failing assigned page marks nothing reassigned, since it never confirmed who the viewer is", async () => {
+  mockLinear([{ body: { data: { i0: issue("A-1", undefined, { id: "sam", name: "Sam" }) } } }], [], {
+    status: 502,
+    body: { errors: [{ message: "Bad gateway" }] },
+  });
+
+  const result = await fetchLinear(["A-1"]);
+
+  expect(result.error).toBe("Linear API 502: Bad gateway");
+  expect(result.facts[0]?.reassignedTo).toBeUndefined();
 });
 
 const flags = { isActive: false, isNext: false, isPast: false, isFuture: false, completedAt: null };
