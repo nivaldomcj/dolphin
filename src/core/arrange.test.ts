@@ -44,7 +44,7 @@ describe("placeTask", () => {
   });
 
   test("rejects an unknown lane", async () => {
-    expect(placeTask("T1", "Z")).rejects.toThrow("Unknown lane Z");
+    await expect(placeTask("T1", "Z")).rejects.toThrow("Unknown lane Z");
   });
 });
 
@@ -125,7 +125,7 @@ describe("reorderLane", () => {
   });
 
   test("rejects a list that drops or adds tasks", async () => {
-    expect(reorderLane("A", ["T2", "T1", "T3"])).rejects.toThrow("Missing: RUN. Not in lane: T3.");
+    await expect(reorderLane("A", ["T2", "T1", "T3"])).rejects.toThrow("Missing: RUN. Not in lane: T3.");
   });
 });
 
@@ -147,7 +147,7 @@ describe("edges", () => {
 
   test("rejects a loop", async () => {
     await addEdge("T1", "T2");
-    expect(addEdge("T2", "T1")).rejects.toThrow("makes a loop");
+    await expect(addEdge("T2", "T1")).rejects.toThrow("makes a loop");
   });
 });
 
@@ -173,7 +173,7 @@ describe("parallel calls", () => {
 
   test("a reorder that starts after a move sees the move and is rejected", async () => {
     await placeTask("T1", "B");
-    expect(reorderLane("A", ["T2", "T1", "RUN"])).rejects.toThrow("Missing: none. Not in lane: T1.");
+    await expect(reorderLane("A", ["T2", "T1", "RUN"])).rejects.toThrow("Missing: none. Not in lane: T1.");
   });
 
   test("two edges that would form a loop cannot both be added", async () => {

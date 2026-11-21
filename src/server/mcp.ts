@@ -31,7 +31,8 @@ const pin = z
   .refine((p) => p.kind !== undefined || p.app !== undefined, "A pin needs `kind`, `app` or both.");
 const laneKey = z.string().describe("Lane key, e.g. A");
 
-function buildServer(): McpServer {
+/** One MCP server with every dolphin tool. Exported for tests, which connect a client to it in memory. */
+export function buildServer(): McpServer {
   const mcp = new McpServer({ name: "dolphin", version: "0.3.0" });
 
   mcp.registerTool(

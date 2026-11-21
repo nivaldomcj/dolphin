@@ -1,11 +1,13 @@
-import { afterAll, expect, test } from "bun:test";
+import { afterAll, expect, spyOn, test } from "bun:test";
 import { mkdtemp, mkdir, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Database } from "bun:sqlite";
 import { config } from "../config";
 import { db } from "../db";
-import { backup } from "./backup";
+import { backup, backupDaily } from "./backup";
+
+const localDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 const dir = await mkdtemp(join(tmpdir(), "dolphin-backup-"));
 const saved = config.backup;
@@ -32,4 +34,29 @@ test("writes one copy a day, readable, and keeps the newest days", async () => {
 
   await backup({ now: new Date(2026, 10, 19) });
   expect((await readdir(dir)).sort()).toEqual(["2026-11-18", "2026-11-19", "notes"]);
+});
+
+test("the daily backup logs the folder it wrote", async () => {
+  const log = spyOn(console, "log").mockImplementation(() => {});
+  try {
+    await backupDaily();
+    expect(log).toHaveBeenCalledWith(`backup written to ${join(dir, localDay(new Date()))}`);
+  } finally {
+    log.mockRestore();
+  }
+});
+
+test("the daily backup never throws: a failure is logged instead", async () => {
+  const blocker = join(dir, "not-a-dir");
+  await Bun.write(blocker, "a file where the backup folder should be");
+  config.backup = { dir: blocker, keep: 2 };
+  const error = spyOn(console, "error").mockImplementation(() => {});
+  try {
+    await backupDaily();
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(String(error.mock.calls[0]?.[0])).toStartWith("backup failed: ");
+  } finally {
+    error.mockRestore();
+    config.backup = { dir, keep: 2 };
+  }
 });

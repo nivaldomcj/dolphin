@@ -2,7 +2,8 @@ import { beforeEach, expect, test } from "bun:test";
 import { db } from "../db";
 import type { Fact } from "../sources/types";
 import { readBoard } from "./board";
-import { createRefresh, NOT_FOUND } from "./refresh";
+import { config } from "../config";
+import { createRefresh, NOT_FOUND, refresh as refreshNow } from "./refresh";
 
 const fact = (id: string, status: string, closed = false): Fact => ({ id, source: "linear", title: `${id} title`, status, url: `https://x/${id}`, closed });
 
@@ -160,4 +161,15 @@ test("partial Linear results apply, with the error reported and nothing closed a
   const summary = await refresh();
 
   expect(summary).toEqual({ changes: [{ id: "L1", from: "Todo", to: "In Progress" }], added: [], errors: { linear: "Linear API 502: no data" } });
+});
+
+test("the exported refresh reads the configured trackers and reports nothing when both are off", async () => {
+  const saved = { linear: config.linear, github: config.github, backup: config.backup };
+  Object.assign(config, { linear: false, github: undefined, backup: false });
+  try {
+    expect(await refreshNow()).toEqual({ changes: [], added: [], errors: {} });
+    expect((await readBoard()).tasks.L1?.status).toBe("Todo");
+  } finally {
+    Object.assign(config, saved);
+  }
 });

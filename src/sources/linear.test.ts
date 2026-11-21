@@ -40,17 +40,17 @@ test("drops the ids Linear reports not found and asks again for the rest", async
 
 test("a not-found error without a usable alias fails instead of guessing or looping", async () => {
   mockLinear([{ status: 400, body: { data: null, errors: [{ message: "Entity not found: Issue" }] } }]);
-  expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400: Entity not found: Issue");
+  await expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400: Entity not found: Issue");
 });
 
 test("an alias outside the batch fails instead of looping", async () => {
   mockLinear([{ status: 400, body: { data: null, errors: [notFound("i9")] } }]);
-  expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400");
+  await expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400");
 });
 
 test("a not-found on a nested field fails instead of closing the issue", async () => {
   mockLinear([{ status: 400, body: { data: null, errors: [{ message: "Entity not found: WorkflowState", path: ["i0", "state"] }] } }]);
-  expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400");
+  await expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 400");
 });
 
 test("an issue moved to another team stays under the id the board asked for, without a second card", async () => {
@@ -78,7 +78,7 @@ test("an issue that moves team between the two queries is still one card", async
 
 test("an alias that only looks like one in the batch (i01) fails instead of closing i1", async () => {
   mockLinear([{ status: 400, body: { data: null, errors: [notFound("i01")] } }]);
-  expect(fetchLinear(["A-1", "A-2"])).rejects.toThrow("Linear API 400");
+  await expect(fetchLinear(["A-1", "A-2"])).rejects.toThrow("Linear API 400");
 });
 
 test("a failing assigned page keeps the confirmed lookups and reports the error, closing nothing", async () => {
@@ -96,7 +96,7 @@ test("a failing assigned page keeps the confirmed lookups and reports the error,
 
 test("a failure before anything is confirmed still fails the whole fetch", async () => {
   mockLinear([{ status: 500, body: { errors: [{ message: "boom" }] } }]);
-  expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 500: boom");
+  await expect(fetchLinear(["A-1"])).rejects.toThrow("Linear API 500: boom");
 });
 
 const flags = { isActive: false, isNext: false, isPast: false, isFuture: false, completedAt: null };
