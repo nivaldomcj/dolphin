@@ -1,0 +1,43 @@
+/* Neutral colors follow the DaisyUI theme; status and arrow colors are the board's own. */
+:root {
+  --bg: var(--color-base-200);
+  --fg: var(--color-base-content);
+  --muted: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  --line: var(--color-base-300);
+  --board-bg: var(--color-base-100);
+  --card-fg: var(--color-base-content);
+  --card-border: #2b3a8f;
+  --card-shadow: none;
+  --ring-up: var(--s-blocked);
+  --card-shadow-hover: 0 3px 10px rgba(0, 0, 0, 0.18);
+  --s-progress: #ffe45c;
+  --s-blocked: #f47c7c;
+  --s-todo: #ffffff;
+  --s-done: #8fb8ff;
+  --seq: #a0a0ac;
+  --blk: #1f47d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ring-up: oklch(0.66 0.17 22);
+    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --card-shadow-hover: 0 4px 14px rgba(0, 0, 0, 0.5);
+    --s-progress: oklch(0.43 0.085 80);
+    --s-blocked: oklch(0.39 0.1 22);
+    --s-todo: oklch(0.31 0.012 265);
+    --s-done: oklch(0.37 0.075 262);
+    --seq: #6e6e7c;
+    --blk: #7b93ff;
+  }
+}
+:root[data-theme="dark"] {
+  --ring-up: oklch(0.66 0.17 22);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --card-shadow-hover: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --s-progress: oklch(0.43 0.085 80);
+  --s-blocked: oklch(0.39 0.1 22);
+  --s-todo: oklch(0.31 0.012 265);
+  --s-done: oklch(0.37 0.075 262);
+  --seq: #6e6e7c;
+  --blk: #7b93ff;
+}

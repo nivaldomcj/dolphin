@@ -1,0 +1,25 @@
+@import "tailwindcss";
+/*
+ * The board's own look, unlayered so it wins over Tailwind's layers. Keep this order: the dark-theme overrides in
+ * lanes.css come before the base card and tip rules on purpose, and win by specificity.
+ */
+@import "./tokens.css";
+@import "./layout.css";
+@import "./legend.css";
+@import "./lanes.css";
+@import "./cards.css";
+@import "./arrows.css";
+@import "./tip.css";
+@import "./privacy.css";
+@plugin "daisyui" {
+  themes:
+    light --default,
+    dark --prefersdark;
+}
+
+/* Tooltips wait a moment before showing, so moving the pointer across the buttons does not flash them. */
+.tooltip:hover > .tooltip-content,
+.tooltip:hover[data-tip]::before,
+.tooltip:hover::after {
+  transition-delay: 400ms;
+}

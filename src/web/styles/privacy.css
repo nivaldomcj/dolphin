@@ -1,0 +1,37 @@
+/*
+ * Privacy mode, for screenshots: task titles and lane names are not painted at all (transparent text under solid
+ * bars, one per line), and the hover card is hidden. A blur would keep the glyph shapes, which can be recovered.
+ */
+:root {
+  --redact: rgba(0, 0, 0, 0.16);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --redact: rgba(255, 255, 255, 0.18);
+  }
+}
+:root[data-theme="dark"] {
+  --redact: rgba(255, 255, 255, 0.18);
+}
+body.private .sensitive {
+  /* Forced-colors mode would repaint transparent text and drop the bars, revealing it. */
+  forced-color-adjust: none;
+  color: transparent;
+  text-shadow: none;
+  user-select: none;
+  background: repeating-linear-gradient(to bottom, var(--redact) 0 calc(1lh - 0.4em), transparent calc(1lh - 0.4em) 1lh);
+}
+body.private .tip {
+  display: none;
+}
+/* The search box hides its text but stays usable: keep the caret, the placeholder and selection. */
+body.private input.sensitive {
+  caret-color: var(--fg);
+  user-select: auto;
+}
+body.private input.sensitive::placeholder {
+  color: var(--muted);
+}
+body.private .sensitive::selection {
+  color: transparent;
+}

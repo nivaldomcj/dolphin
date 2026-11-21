@@ -1,0 +1,21 @@
+/* max-content: a fixed box near the window edge would shrink to fit, so Tip would measure (and place) a squeezed card. */
+.tip {
+  position: fixed;
+  z-index: 10;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 16px));
+  background: #1d1d24;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+.tip b {
+  font-size: 13px;
+}
+.tip .k {
+  color: #b8b8c8;
+}

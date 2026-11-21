@@ -1,0 +1,23 @@
+/* The legend bar's color swatches and line samples. */
+.sw {
+  background: var(--fill);
+  display: inline-block;
+  width: 22px;
+  height: 14px;
+  border: 1.5px solid var(--card-border);
+  border-radius: 3px;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+.sw.dash {
+  border-style: dashed;
+  background: var(--board-bg);
+}
+.ln {
+  display: inline-block;
+  width: 26px;
+  height: 0;
+  border-top: 2px solid;
+  vertical-align: 3px;
+  margin-right: 4px;
+}
