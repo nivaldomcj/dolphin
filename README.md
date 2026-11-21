@@ -188,8 +188,8 @@ database, `withConfig` and `useConfig` to swap config parts, `useDom` for the pa
   call `check-private.ts` by this path, so keep it there.
 - `src/config.ts` loads `dolphin.config.ts`; `src/define-config.ts` holds its types (your config imports it by path).
 - `src/web/`: the Preact page. `main.tsx` renders `app.tsx`, the layout; `hooks/` holds the state (board, search,
-  collapsed lanes, display settings, drag and drop), `components/` the parts of the page, `lib/` the pure helpers and
-  `styles/` the CSS.
+  collapsed lanes, display settings, drag and drop), `components/` the parts of the page, `lib/` the helpers that hold
+  no state (`move.ts` also reads the page to find a drop target) and `styles/` the CSS.
 - `test/`: shared test helpers. `e2e/`: the Playwright tests.
 
 Task facts (title, status) come from the trackers. Lanes, positions and dependencies are set by hand or by Claude.
