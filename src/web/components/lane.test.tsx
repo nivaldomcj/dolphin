@@ -92,19 +92,7 @@ describe("Lane", () => {
   });
 
   test("one task is counted in the singular", () => {
-    const { container } = render(
-      <Lane
-        lane={lane("B", ["T1"])}
-        tasks={tasks}
-        markOf={() => undefined}
-        collapsed={false}
-        onToggle={noop}
-        hide={{ closed: false, otherCycles: false }}
-        dragId={undefined}
-        drop={null}
-        {...handlers}
-      />,
-    );
+    const { container } = show({ lane: lane("B", ["T1"]) });
     expect(container.textContent).toContain("1 task");
     expect(container.textContent).not.toContain("1 tasks");
   });
