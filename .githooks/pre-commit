@@ -6,6 +6,7 @@ if [ -f src/scripts/check-private.ts ]; then
   bun src/scripts/check-private.ts --staged
 fi
 # Lint and format check on the staged files. Branches without Biome skip it.
-if [ -x node_modules/.bin/biome ] && [ -f biome.json ]; then
-  node_modules/.bin/biome check --staged --no-errors-on-unmatched --files-ignore-unknown=true
+if [ -f node_modules/@biomejs/biome/bin/biome ] && [ -f biome.json ]; then
+  # Through Bun: the biome entry is a Node script, and dolphin needs no Node.
+  bun node_modules/@biomejs/biome/bin/biome check --staged --no-errors-on-unmatched --files-ignore-unknown=true
 fi
