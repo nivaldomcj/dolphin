@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/preact";
 import { useState } from "preact/hooks";
 import type { Board } from "../../shared/types";
 import { board, lane } from "../../../test/board";
-import { useDom } from "../../../test/dom";
+import { laneInDom, useDom } from "../../../test/dom";
 import { useMove } from "./use-move";
 
 useDom();
@@ -19,36 +19,10 @@ function setup(initial: Board = start()) {
   });
 }
 
-/**
- * Lane elements for `targetAt` to find: cards are 100px wide side by side. The pointer is "over" whatever `over`
- * names, through a stubbed elementFromPoint.
- */
-function lanesInDom(b: Board) {
-  for (const l of b.lanes) {
-    const el = document.createElement("div");
-    el.className = "lane";
-    el.dataset.lane = l.key;
-    el.innerHTML = `<div class="cards"></div>`;
-    l.ids.forEach((id, i) => {
-      const a = document.createElement("a");
-      a.className = "card";
-      a.dataset.id = id;
-      a.getBoundingClientRect = () => ({
-        left: i * 100,
-        width: 100,
-        right: i * 100 + 100,
-        top: 0,
-        bottom: 20,
-        height: 20,
-        x: i * 100,
-        y: 0,
-        toJSON() {},
-      });
-      el.querySelector(".cards")!.appendChild(a);
-    });
-    document.body.appendChild(el);
-  }
-}
+/** Every lane of the board in the page, for `targetAt`; the pointer is "over" whatever `over` names. */
+const lanesInDom = (b: Board) => {
+  for (const l of b.lanes) laneInDom(l.key, l.ids);
+};
 let over = "";
 beforeEach(() => {
   over = "";
@@ -56,7 +30,6 @@ beforeEach(() => {
 });
 afterEach(() => {
   (document.elementFromPoint as unknown as { mockRestore: () => void }).mockRestore();
-  (globalThis.fetch as unknown as { mockRestore?: () => void }).mockRestore?.();
 });
 
 /** An Alt + press on a card, as the card's onPointerDown hands it to the hook. */

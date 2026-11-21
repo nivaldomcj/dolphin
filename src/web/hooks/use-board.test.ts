@@ -1,14 +1,10 @@
-import { afterEach, describe, expect, spyOn, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { renderHook, waitFor } from "@testing-library/preact";
 import { board, lane } from "../../../test/board";
 import { useDom } from "../../../test/dom";
 import { useBoard } from "./use-board";
 
 useDom();
-
-afterEach(() => {
-  (globalThis.fetch as unknown as { mockRestore?: () => void }).mockRestore?.();
-});
 
 describe("useBoard", () => {
   test("loads the board and maps lanes and blockers both ways", async () => {

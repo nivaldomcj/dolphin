@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, expect, spyOn, test } from "bun:test";
+import { beforeAll, expect, spyOn, test } from "bun:test";
 import { fireEvent, render, waitFor } from "@testing-library/preact";
 import type { Board } from "../shared/types";
 import { board, lane, task } from "../../test/board";
@@ -14,10 +14,6 @@ beforeAll(() => {
     observe() {}
     disconnect() {}
   } as unknown as typeof ResizeObserver;
-});
-
-afterEach(() => {
-  (globalThis.fetch as unknown as { mockRestore?: () => void }).mockRestore?.();
 });
 
 const serve = (b: Board | Response) =>

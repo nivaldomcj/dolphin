@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
 import { applyMove, mentions, targetAt } from "./move";
 import { board, lane } from "../../../test/board";
-import { useDom } from "../../../test/dom";
+import { laneInDom, useDom } from "../../../test/dom";
 
 useDom();
 
@@ -85,33 +85,6 @@ describe("targetAt", () => {
     (document.elementFromPoint as unknown as { mockRestore?: () => void }).mockRestore?.();
   });
 
-  /** A lane with cards 100px wide side by side: card i spans x = i*100 .. i*100+100. */
-  function laneEl(key: string, cardIds: string[], { collapsed = false } = {}) {
-    const el = document.createElement("div");
-    el.className = `lane${collapsed ? " collapsed" : ""}`;
-    el.dataset.lane = key;
-    el.innerHTML = `<button class="lane-head">head</button><div class="cards"></div>`;
-    const cards = el.querySelector(".cards")!;
-    cardIds.forEach((id, i) => {
-      const a = document.createElement("a");
-      a.className = "card";
-      a.dataset.id = id;
-      a.getBoundingClientRect = () => ({
-        left: i * 100,
-        width: 100,
-        right: i * 100 + 100,
-        top: 0,
-        bottom: 20,
-        height: 20,
-        x: i * 100,
-        y: 0,
-        toJSON() {},
-      });
-      cards.appendChild(a);
-    });
-    document.body.appendChild(el);
-    return el;
-  }
   const pointAt = (el: Element | null) => spyOn(document, "elementFromPoint").mockReturnValue(el);
 
   test("outside every lane there is no target", () => {
@@ -120,43 +93,43 @@ describe("targetAt", () => {
   });
 
   test("lane N takes an open card at its end, and refuses a closed one", () => {
-    pointAt(laneEl("N", ["NEW"]).querySelector(".cards"));
+    pointAt(laneInDom("N", ["NEW"]).querySelector(".cards"));
     expect(targetAt(0, 0, "X", false)).toEqual({ lane: "N" });
     expect(targetAt(0, 0, "X", true)).toBeNull();
   });
 
   test("lands before the first card whose middle is right of the pointer", () => {
-    pointAt(laneEl("A", ["T1", "T2", "T3"]).querySelector(".cards"));
+    pointAt(laneInDom("A", ["T1", "T2", "T3"]).querySelector(".cards"));
     expect(targetAt(120, 5, "X", false)).toEqual({ lane: "A", at: { id: "T2", side: "before" } });
     expect(targetAt(10, 5, "X", false)).toEqual({ lane: "A", at: { id: "T1", side: "before" } });
   });
 
   test("right of every card it lands after the last one", () => {
-    pointAt(laneEl("A", ["T1", "T2"]).querySelector(".cards"));
+    pointAt(laneInDom("A", ["T1", "T2"]).querySelector(".cards"));
     expect(targetAt(500, 5, "X", false)).toEqual({ lane: "A", at: { id: "T2", side: "after" } });
   });
 
   test("an empty lane takes the card at its end", () => {
-    pointAt(laneEl("A", []).querySelector(".cards"));
+    pointAt(laneInDom("A", []).querySelector(".cards"));
     expect(targetAt(5, 5, "X", false)).toEqual({ lane: "A" });
   });
 
   test("a lane header or a collapsed lane means the end of the lane", () => {
-    pointAt(laneEl("A", ["T1"]).querySelector(".lane-head"));
+    pointAt(laneInDom("A", ["T1"]).querySelector(".lane-head"));
     expect(targetAt(0, 0, "X", false)).toEqual({ lane: "A" });
-    pointAt(laneEl("B", ["T2"], { collapsed: true }));
+    pointAt(laneInDom("B", ["T2"], { collapsed: true }));
     expect(targetAt(0, 0, "X", false)).toEqual({ lane: "B" });
   });
 
   test("the card's own gap is marked home, so the drop changes nothing", () => {
-    pointAt(laneEl("A", ["T1", "T2", "T3"]).querySelector(".cards"));
+    pointAt(laneInDom("A", ["T1", "T2", "T3"]).querySelector(".cards"));
     // Over T2 itself: the next card after skipping T2 is T3, which is T2's own next neighbor.
     expect(targetAt(150, 5, "T2", false)).toEqual({ lane: "A", at: { id: "T3", side: "before" }, home: true });
     expect(targetAt(10, 5, "T2", false)).toEqual({ lane: "A", at: { id: "T1", side: "before" } });
   });
 
   test("the last card dropped past the end is home too", () => {
-    pointAt(laneEl("A", ["T1", "T2"]).querySelector(".cards"));
+    pointAt(laneInDom("A", ["T1", "T2"]).querySelector(".cards"));
     expect(targetAt(500, 5, "T2", false)).toEqual({ lane: "A", at: { id: "T1", side: "after" }, home: true });
   });
 });

@@ -1,14 +1,10 @@
-import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
+import { describe, expect, mock, spyOn, test } from "bun:test";
 import { act, fireEvent, render, waitFor } from "@testing-library/preact";
 import { board, lane } from "../../../test/board";
 import { useDom } from "../../../test/dom";
 import { describeRefresh, RefreshButton } from "./refresh-button";
 
 useDom();
-
-afterEach(() => {
-  (globalThis.fetch as unknown as { mockRestore?: () => void }).mockRestore?.();
-});
 
 describe("refresh", () => {
   test("a summary with nothing in it reads up to date", () => {
