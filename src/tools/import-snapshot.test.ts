@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { resetDb } from "../../test/db";
-import { readBoard } from "./board";
+import { readBoard } from "../core/board";
 import { BoardNotEmptyError, importSnapshot, PALETTE, type Snapshot, trackerOf } from "./import-snapshot";
 
 beforeEach(resetDb);

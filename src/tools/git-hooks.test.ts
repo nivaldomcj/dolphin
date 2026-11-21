@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, test } from "bun:test";
 import { mkdtemp, mkdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { installHooks, MARK } from "./hooks";
+import { installHooks, MARK } from "./git-hooks";
 
 let root: string, source: string, hooks: string;
 beforeEach(async () => {

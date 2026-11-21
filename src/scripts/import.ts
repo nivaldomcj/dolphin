@@ -3,7 +3,7 @@
  * Usage: bun run import <path/to/data.json> [--force]. It replaces every lane, task, placement and edge,
  * so it refuses to run on a board that already has lanes unless --force is given.
  */
-import { BoardNotEmptyError, importSnapshot, type Snapshot } from "../core/import-snapshot";
+import { BoardNotEmptyError, importSnapshot, type Snapshot } from "../tools/import-snapshot";
 
 const args = Bun.argv.slice(2);
 const force = args.includes("--force");

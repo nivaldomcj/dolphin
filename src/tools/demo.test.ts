@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import { db } from "../db";
-import { checkRules } from "./arrange";
-import { readBoard } from "./board";
+import { checkRules } from "../core/arrange";
+import { readBoard } from "../core/board";
 import { seedDemo } from "./demo";
-import { readRules } from "./rules";
+import { readRules } from "../core/rules";
 
 test("writes five lanes, nineteen tasks, and leaves ENG-160 waiting in lane N", async () => {
   expect(await seedDemo()).toEqual({ lanes: 5, tasks: 19 });

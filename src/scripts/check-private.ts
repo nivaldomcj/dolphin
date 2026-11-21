@@ -4,7 +4,7 @@
  * The git hooks run --staged before a commit and --message on the commit message.
  */
 import { config } from "../config";
-import { matchers, scanDiff, scanFile, scanMessage } from "../core/privacy";
+import { matchers, scanDiff, scanFile, scanMessage } from "../tools/privacy";
 
 const terms = config.denylist ?? [];
 if (terms.length === 0) {

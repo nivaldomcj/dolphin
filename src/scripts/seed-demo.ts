@@ -10,6 +10,6 @@ if (!target || basename(target) === "dolphin.db") {
   process.exit(1);
 }
 
-const { seedDemo } = await import("../core/demo");
+const { seedDemo } = await import("../tools/demo");
 const n = await seedDemo();
 console.log(`Demo board written to ${target}: ${n.lanes} lanes, ${n.tasks} tasks (ENG-160 waits in lane N).`);

@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { writeRules } from "./rules";
+import { writeRules } from "../core/rules";
 
 type Status = [status: string, closed?: boolean];
 const T: Record<string, Status> = {
