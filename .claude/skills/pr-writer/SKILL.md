@@ -48,7 +48,7 @@ commit or existing PR text.
 
 Use `<type>(<scope>): <subject>` or `<type>: <subject>`.
 
-Allowed types: `feat`, `fix`, `ref`, `perf`, `docs`, `test`, `build`,
+Allowed types: `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `build`,
 `ci`, `chore`, `style`, `meta`, `license`, and `revert`.
 
 - Describe the dominant full-branch change with the narrowest accurate type
