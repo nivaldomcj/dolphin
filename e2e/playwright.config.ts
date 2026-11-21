@@ -14,8 +14,12 @@ export default defineConfig({
   // One server and one database: tests run one at a time.
   workers: 1,
   fullyParallel: false,
-  reporter: "list",
+  // In CI: no stray test.only, one retry with a trace kept for the uploaded results, and failures shown on the PR.
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? [["list"], ["github"]] : "list",
   use: {
+    trace: "on-first-retry",
     // Your installed Chrome, so Playwright downloads no browser.
     channel: "chrome",
     headless: true,
