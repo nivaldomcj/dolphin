@@ -70,7 +70,8 @@ test("a gh failure throws with gh's own message", async () => {
 });
 
 test("an aborted refresh throws instead of returning partial output", async () => {
-  const gh = await fakeGh("slow", "sleep 5");
+  // exec: the kill must reach the process holding the pipes; a forked sleep would keep them open for 5 s.
+  const gh = await fakeGh("slow", "exec sleep 5");
   const controller = new AbortController();
   setTimeout(() => controller.abort(new Error("deadline")), 50);
 
