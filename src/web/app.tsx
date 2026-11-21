@@ -20,7 +20,8 @@ function App() {
   const { board, setBoard, error, graph } = useBoard();
   const display = useDisplay();
   const lanes = useCollapsedLanes();
-  const search = useSearch(board, !display.completed);
+  const hide = { closed: !display.completed, otherCycles: !display.otherCycles };
+  const search = useSearch(board, hide);
   const [focus, setFocus] = useState<{ id: string; x: number; y: number } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -83,7 +84,7 @@ function App() {
         {board && board.lanes.length === 0 && <p class="empty">The board is empty. Run `bun run import &lt;data.json&gt;`.</p>}
         {board && (
           <div class="board" ref={boardRef}>
-            <Arrows root={boardRef} board={board} laneOf={laneOf} showInLane={display.inLane} layoutKey={`${display.titles}|${display.completed}|${lanes.key}|${extraN}`} />
+            <Arrows root={boardRef} board={board} laneOf={laneOf} showInLane={display.inLane} layoutKey={`${display.titles}|${display.completed}|${display.otherCycles}|${lanes.key}|${extraN}`} />
             {shownLanes.map((lane) => (
               <Lane
                 key={lane.key}
@@ -92,7 +93,7 @@ function App() {
                 markOf={markOf}
                 collapsed={lanes.collapsed.has(lane.key) || (extraN && lane.key === UNPLACED_LANE)}
                 onToggle={() => lanes.toggle(lane.key)}
-                hideClosed={!display.completed}
+                hide={hide}
                 onFocus={(id, e) => setFocus({ id, x: e.clientX, y: e.clientY })}
                 onMove={(e) => setFocus((f) => f && { ...f, x: e.clientX, y: e.clientY })}
                 onBlur={() => setFocus(null)}

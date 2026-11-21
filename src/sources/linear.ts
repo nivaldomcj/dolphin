@@ -1,9 +1,10 @@
 import { config } from "../config";
+import type { Cycle } from "../types";
 import type { Fact } from "./types";
 
 const API = "https://api.linear.app/graphql";
 const KEYCHAIN_ITEM = "dolphin-linear-api-key";
-const FIELDS = "id identifier title url state { name type }";
+const FIELDS = "id identifier title url state { name type } cycle { number isActive isNext isPast }";
 /** Linear state types that still need work. Everything else (completed, canceled, duplicate) is closed. */
 const OPEN_TYPES = ["triage", "backlog", "unstarted", "started"];
 
@@ -14,7 +15,12 @@ interface Issue {
   title: string;
   url: string;
   state: { name: string; type: string };
+  cycle: { number: number; isActive: boolean; isNext: boolean; isPast: boolean } | null;
 }
+
+/** Linear's cycle flags as one state. A cycle that is neither active, next nor past is a later one. */
+export const toCycle = (c: Issue["cycle"]): Cycle | null =>
+  c ? { number: c.number, state: c.isActive ? "current" : c.isNext ? "next" : c.isPast ? "past" : "future" } : null;
 
 /** Reads the personal API key from $LINEAR_API_KEY, else from the macOS Keychain. */
 async function apiKey(): Promise<string> {
@@ -60,6 +66,7 @@ const toFact = (i: Issue): Fact => ({
   status: i.state.name,
   url: i.url,
   closed: !OPEN_TYPES.includes(i.state.type),
+  cycle: toCycle(i.cycle),
 });
 
 /**

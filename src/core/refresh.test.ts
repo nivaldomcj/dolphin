@@ -52,6 +52,26 @@ test("a failing source leaves its tasks untouched and the other source still app
   expect((await readBoard()).tasks.G1?.status).toBe("Backlog");
 });
 
+test("writes the cycle without reporting it as a change, and keeps it when the tracker has no cycles", async () => {
+  linear = async () => ({ facts: [{ ...fact("L1", "Todo"), cycle: { number: 43, state: "next" } }, { ...fact("L2", "Todo"), cycle: null }], missing: [] });
+  github = async () => [{ ...fact("G1", "Backlog"), source: "github" }];
+
+  expect(await refresh()).toEqual({ changes: [], added: ["L2"], errors: {} });
+  let board = await readBoard();
+  expect(board.tasks.L1?.cycle).toEqual({ number: 43, state: "next" });
+  expect(board.tasks.L2?.cycle).toBeNull();
+  expect(board.tasks.G1?.cycle).toBeNull();
+
+  // The cycle becomes the current one, then the task leaves its cycle.
+  linear = async () => ({ facts: [{ ...fact("L1", "Todo"), cycle: { number: 43, state: "current" } }], missing: [] });
+  await refresh();
+  expect((await readBoard()).tasks.L1?.cycle).toEqual({ number: 43, state: "current" });
+  linear = async () => ({ facts: [{ ...fact("L1", "Todo"), cycle: null }], missing: [] });
+  await refresh();
+  board = await readBoard();
+  expect(board.tasks.L1?.cycle).toBeNull();
+});
+
 test("a second refresh with the same facts changes nothing", async () => {
   linear = async () => ({ facts: [fact("L1", "In Progress")], missing: [] });
   await refresh();

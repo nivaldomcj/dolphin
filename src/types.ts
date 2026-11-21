@@ -15,6 +15,17 @@ export interface TaskMeta {
   note?: string;
 }
 
+/** Where a cycle sits against today. Only `current` is the cycle being worked on. */
+export type CycleState = "current" | "next" | "future" | "past";
+
+export const CYCLE_STATES: readonly CycleState[] = ["current", "next", "future", "past"];
+
+/** The tracker's cycle of a task. Only Linear has cycles. */
+export interface Cycle {
+  number: number;
+  state: CycleState;
+}
+
 export interface Task extends TaskMeta {
   id: string;
   source: Source;
@@ -22,6 +33,8 @@ export interface Task extends TaskMeta {
   status: string;
   url: string;
   closed: boolean;
+  /** Null when the task has no cycle. */
+  cycle: Cycle | null;
   /** Card fill, from the status and the config's `tones`. */
   tone: Tone;
 }

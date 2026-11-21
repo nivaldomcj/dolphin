@@ -55,10 +55,12 @@ The header has 3 buttons:
 
 - 🔁 refreshes statuses from the trackers. A toast at the bottom left shows progress, then the changes.
 - 🔍 opens the search box (also ⌘F). Enter and Shift+Enter step through the matches; Esc clears.
-- 🎛️ opens the settings: theme `[💻|☀️|🌙]`, then `[🟢|🔴]` for titles, positions, in-lane blockers, completed and legend, and privacy `[🙈|🙉]`.
+- 🎛️ opens the settings: theme `[💻|☀️|🌙]`, then `[🟢|🔴]` for titles, positions, in-lane blockers, completed, other cycles and legend, and privacy `[🙈|🙉]`.
 
-With `completed` off, Done, Canceled and "Not found" tasks are hidden; the other cards keep their position
-numbers, so they still match the MCP's positions. Click a lane header to collapse that lane to one thin row (`▸ Lane X · 15 tasks`); the other lanes take the freed
+With `completed` off, Done, Canceled and "Not found" tasks are hidden; with `other cycles` off, tasks planned for a
+Linear cycle other than the current one are hidden. The other cards keep their position numbers, so they still match
+the MCP's positions. A task in another cycle has a striped fill, a dotted violet border and its cycle number (`C42`) in
+the top-right corner. A task with no cycle is not in another cycle. Click a lane header to collapse that lane to one thin row (`▸ Lane X · 15 tasks`); the other lanes take the freed
 height, and a search match inside a collapsed lane expands it. The legend shows as a bar at the bottom. Privacy mode replaces task titles and lane names with solid bars and
 hides the hover card, so a screenshot shows only task ids, statuses and the layout. It does not blur: blurred
 text keeps the glyph shapes and can sometimes be recovered. Settings are kept in `localStorage`.
@@ -72,7 +74,8 @@ MCP `place_task`, and a toast shows any rule warning that names the moved card.
 ## Refresh
 
 The 🔁 button (and the MCP `refresh` tool) pulls task statuses from Linear and from the GitHub project in `dolphin.config.ts`. It
-writes titles and statuses only: lanes, positions and dependencies stay as they are. Open tasks the board does not
+writes titles, statuses and Linear cycles only: lanes, positions and dependencies stay as they are. A cycle move is
+written but not listed as a change. Open tasks the board does not
 know show in lane N. A refresh takes about 9 s, most of it waiting on GitHub.
 
 - Linear reads a personal API key from `$LINEAR_API_KEY`, else from the macOS Keychain. Store it once:

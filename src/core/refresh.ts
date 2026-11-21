@@ -12,7 +12,13 @@ interface Known {
   status: string;
   url: string;
   closed: number;
+  cycle_number: number | null;
+  cycle_state: string | null;
 }
+
+/** The fact's cycle as the two columns, or nothing when the tracker does not report cycles. */
+const cycleColumns = (f: Fact) =>
+  f.cycle === undefined ? {} : { cycle_number: f.cycle?.number ?? null, cycle_state: f.cycle?.state ?? null };
 
 /** Status written on a Linear task that Linear no longer returns. The task is also closed, so its card fades. */
 export const NOT_FOUND = "Not found in Linear";
@@ -23,7 +29,10 @@ export const NOT_FOUND = "Not found in Linear";
  */
 async function apply(facts: Fact[], missing: string[], summary: RefreshSummary): Promise<void> {
   await db.transaction().execute(async (trx) => {
-    const rows: Known[] = await trx.selectFrom("task").select(["id", "source", "title", "status", "url", "closed"]).execute();
+    const rows: Known[] = await trx
+      .selectFrom("task")
+      .select(["id", "source", "title", "status", "url", "closed", "cycle_number", "cycle_state"])
+      .execute();
     const known = new Map(rows.map((r) => [r.id, r]));
 
     for (const f of facts) {
@@ -32,16 +41,23 @@ async function apply(facts: Fact[], missing: string[], summary: RefreshSummary):
         if (f.closed) continue;
         const inserted = await trx
           .insertInto("task")
-          .values({ id: f.id, source: f.source, title: f.title, status: f.status, url: f.url })
+          .values({ id: f.id, source: f.source, title: f.title, status: f.status, url: f.url, ...cycleColumns(f) })
           .onConflict((oc) => oc.doNothing())
           .executeTakeFirst();
         if (inserted.numInsertedOrUpdatedRows) summary.added.push(f.id);
         continue;
       }
       const closed = f.closed ? 1 : 0;
+      const cycle = cycleColumns(f);
+      // A cycle move is not a status change, so it is written but not reported.
+      const cycleMoved = "cycle_number" in cycle && (k.cycle_number !== cycle.cycle_number || k.cycle_state !== cycle.cycle_state);
       if (k.status !== f.status || k.closed !== closed) summary.changes.push({ id: f.id, from: k.status, to: f.status });
-      if (k.status !== f.status || k.closed !== closed || k.title !== f.title || k.url !== f.url) {
-        await trx.updateTable("task").set({ title: f.title, status: f.status, url: f.url, closed }).where("id", "=", f.id).execute();
+      if (k.status !== f.status || k.closed !== closed || k.title !== f.title || k.url !== f.url || cycleMoved) {
+        await trx
+          .updateTable("task")
+          .set({ title: f.title, status: f.status, url: f.url, closed, ...cycle })
+          .where("id", "=", f.id)
+          .execute();
       }
     }
 

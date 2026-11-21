@@ -1,6 +1,7 @@
 import type { Lane as LaneData, Task } from "../../types";
 import type { Target } from "../hooks/use-move";
 import { toneFill } from "../status";
+import { type Hide, inOtherCycle, isHidden } from "../visibility";
 
 export type Mark = "current" | "hit" | "dim" | "rel-up" | "rel-down" | undefined;
 
@@ -23,7 +24,8 @@ interface CardProps {
 }
 
 function Card({ task, pos, mark, dragging, side, onFocus, onMove, onBlur, onGrab, onCardClick, onCardDragStart }: CardProps) {
-  const classes = ["card", task.kind === "umbrella" && "umbrella", task.closed && "closed", mark, dragging && "dragging", side]
+  const other = inOtherCycle(task);
+  const classes = ["card", task.kind === "umbrella" && "umbrella", task.closed && "closed", other && "other-cycle", mark, dragging && "dragging", side]
     .filter(Boolean)
     .join(" ");
   return (
@@ -42,6 +44,7 @@ function Card({ task, pos, mark, dragging, side, onFocus, onMove, onBlur, onGrab
       onDragStart={onCardDragStart}
     >
       <span class="pos">{pos}</span>
+      {other && task.cycle && <span class="cyc" title={`Cycle ${task.cycle.number} (${task.cycle.state})`}>C{task.cycle.number}</span>}
       <span class="id">{task.id}</span>
       <span class="ttl sensitive">{task.title}</span>
     </a>
@@ -54,8 +57,8 @@ interface LaneProps extends Omit<CardProps, "task" | "pos" | "mark" | "dragging"
   markOf: (id: string) => Mark;
   collapsed: boolean;
   onToggle: () => void;
-  /** Hide closed tasks. Shown cards keep their position number, so it still matches the MCP's positions. */
-  hideClosed: boolean;
+  /** Which tasks to hide. Shown cards keep their position number, so it still matches the MCP's positions. */
+  hide: Hide;
   /** The card being dragged, if any. */
   dragId: string | undefined;
   /** Where the drag would drop, if that changes anything. */
@@ -63,8 +66,8 @@ interface LaneProps extends Omit<CardProps, "task" | "pos" | "mark" | "dragging"
 }
 
 /** One lane. Its header toggles it: a collapsed lane is a thin row with only its key and task count. */
-export function Lane({ lane, tasks, markOf, collapsed, onToggle, hideClosed, dragId, drop, ...handlers }: LaneProps) {
-  const count = hideClosed ? lane.ids.filter((id) => !tasks[id]?.closed).length : lane.ids.length;
+export function Lane({ lane, tasks, markOf, collapsed, onToggle, hide, dragId, drop, ...handlers }: LaneProps) {
+  const count = lane.ids.filter((id) => tasks[id] && !isHidden(tasks[id], hide)).length;
   const here = drop?.lane === lane.key ? drop : null;
   const sideOf = (id: string): Side => (here?.at?.id === id ? `drop-${here.at.side}` : undefined);
   return (
@@ -90,7 +93,7 @@ export function Lane({ lane, tasks, markOf, collapsed, onToggle, hideClosed, dra
         <div class="cards">
           {lane.ids.map((id, i) => {
             const task = tasks[id];
-            return task && !(hideClosed && task.closed) ? (
+            return task && !isHidden(task, hide) ? (
               <Card key={id} task={task} pos={i + 1} mark={markOf(id)} dragging={id === dragId} side={sideOf(id)} {...handlers} />
             ) : null;
           })}

@@ -55,6 +55,8 @@ interface Props {
   legend: boolean;
   completed: boolean;
   onCompleted: (v: boolean) => void;
+  otherCycles: boolean;
+  onOtherCycles: (v: boolean) => void;
   onLegend: (v: boolean) => void;
   privacy: boolean;
   onPrivacy: (v: boolean) => void;
@@ -76,6 +78,7 @@ export function Settings(p: Props) {
         <Switch label="positions" value={p.positions} onChange={p.onPositions} />
         <Switch label="in-lane blockers" value={p.inLane} onChange={p.onInLane} />
         <Switch label="completed" value={p.completed} onChange={p.onCompleted} />
+        <Switch label="other cycles" value={p.otherCycles} onChange={p.onOtherCycles} />
         <Switch label="legend" value={p.legend} onChange={p.onLegend} />
         <Switch label="privacy" value={p.privacy} onChange={p.onPrivacy} on="🙈" off="🙉" />
       </div>
