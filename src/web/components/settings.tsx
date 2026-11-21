@@ -67,7 +67,12 @@ export function Settings(p: Props) {
   return (
     <div class="dropdown dropdown-end">
       <div tabIndex={0} role="button" class="tooltip tooltip-left btn btn-ghost btn-sm btn-square" data-tip="Settings" aria-label="Settings">🎛️</div>
-      <div tabIndex={0} class="dropdown-content z-30 mt-2 grid whitespace-nowrap grid-cols-[auto_auto] items-center gap-x-6 gap-y-2 rounded-box bg-base-100 p-4 text-sm shadow-lg ring-1 ring-base-300">
+      {/*
+        No display utility on .dropdown-content: DaisyUI closes it with `display: none`, and a utility like `grid` would
+        win over that, leaving the closed panel invisible but still taking clicks and drops over the board.
+      */}
+      <div tabIndex={0} class="dropdown-content z-30 mt-2 rounded-box bg-base-100 shadow-lg ring-1 ring-base-300">
+        <div class="grid whitespace-nowrap grid-cols-[auto_auto] items-center gap-x-6 gap-y-2 p-4 text-sm">
         <span>theme</span>
         <Segmented
           value={p.theme}
@@ -81,6 +86,7 @@ export function Settings(p: Props) {
         <Switch label="other cycles" value={p.otherCycles} onChange={p.onOtherCycles} />
         <Switch label="legend" value={p.legend} onChange={p.onLegend} />
         <Switch label="privacy" value={p.privacy} onChange={p.onPrivacy} on="🙈" off="🙉" />
+        </div>
       </div>
     </div>
   );
