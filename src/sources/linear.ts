@@ -4,7 +4,7 @@ import type { Fact } from "./types";
 
 const API = "https://api.linear.app/graphql";
 const KEYCHAIN_ITEM = "dolphin-linear-api-key";
-const FIELDS = "id identifier title url state { name type } cycle { number isActive isNext isPast }";
+const FIELDS = "id identifier title url state { name type } cycle { number isActive isNext isPast isFuture completedAt }";
 /** Linear state types that still need work. Everything else (completed, canceled, duplicate) is closed. */
 const OPEN_TYPES = ["triage", "backlog", "unstarted", "started"];
 
@@ -15,12 +15,19 @@ interface Issue {
   title: string;
   url: string;
   state: { name: string; type: string };
-  cycle: { number: number; isActive: boolean; isNext: boolean; isPast: boolean } | null;
+  cycle: { number: number; isActive: boolean; isNext: boolean; isPast: boolean; isFuture: boolean; completedAt: string | null } | null;
 }
 
-/** Linear's cycle flags as one state. A cycle that is neither active, next nor past is a later one. */
-export const toCycle = (c: Issue["cycle"]): Cycle | null =>
-  c ? { number: c.number, state: c.isActive ? "current" : c.isNext ? "next" : c.isPast ? "past" : "future" } : null;
+/**
+ * Linear's cycle flags as one state. A completed cycle is past even before its scheduled end, when `isActive` and
+ * `isPast` are both false. The next cycle is also `isFuture`, so `isNext` is checked first. A cycle no flag places
+ * is past: it is not one that work is planned for.
+ */
+export const toCycle = (c: Issue["cycle"]): Cycle | null => {
+  if (!c) return null;
+  const state = c.completedAt || c.isPast ? "past" : c.isActive ? "current" : c.isNext ? "next" : c.isFuture ? "future" : "past";
+  return { number: c.number, state };
+};
 
 /** Reads the personal API key from $LINEAR_API_KEY, else from the macOS Keychain. */
 async function apiKey(): Promise<string> {
