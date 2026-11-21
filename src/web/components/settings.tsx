@@ -66,11 +66,13 @@ interface Props {
 export function Settings(p: Props) {
   return (
     <div class="dropdown dropdown-end">
+      {/* biome-ignore lint/a11y/useSemanticElements: DaisyUI's focus dropdown needs a focusable div; Safari does not focus a <button> on click. */}
       <div tabIndex={0} role="button" class="tooltip tooltip-left btn btn-ghost btn-sm btn-square" data-tip="Settings" aria-label="Settings">🎛️</div>
       {/*
         No display utility on .dropdown-content: DaisyUI closes it with `display: none`, and a utility like `grid` would
         win over that, leaving the closed panel invisible but still taking clicks and drops over the board.
       */}
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: focusable so a click inside keeps the dropdown open (DaisyUI focus dropdown). */}
       <div tabIndex={0} class="dropdown-content z-30 mt-2 rounded-box bg-base-100 shadow-lg ring-1 ring-base-300">
         <div class="grid whitespace-nowrap grid-cols-[auto_auto] items-center gap-x-6 gap-y-2 p-4 text-sm">
         <span>theme</span>

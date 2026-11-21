@@ -94,7 +94,9 @@ body { font-size: 14px; line-height: 1.4; background: var(--bg); color: var(--fg
 .card.umbrella { border-style: dashed; }
 .card.closed { opacity: 0.45; }
 /* A task planned for another cycle: striped fill, dotted violet border, and its cycle number in the corner. */
-.card.other-cycle { border-width: 2px; border-style: dotted; border-color: #8b5cf6 !important; /* beats the dark-theme border */
+.card.other-cycle { border-width: 2px; border-style: dotted;
+  /* biome-ignore lint/complexity/noImportantStyles: beats the dark-theme border, which has higher specificity. */
+  border-color: #8b5cf6 !important;
   background: repeating-linear-gradient(135deg, var(--fill) 0 10px, color-mix(in oklab, var(--fill), #8b5cf6 14%) 10px 20px); }
 .card .cyc { position: absolute; top: -9px; right: -7px; padding: 0 5px; border-radius: 8px; font-size: 10px; font-weight: 700;
   color: #fff; background: #8b5cf6; }
@@ -114,7 +116,9 @@ body { font-size: 14px; line-height: 1.4; background: var(--bg); color: var(--fg
 .lane.drop-end { box-shadow: inset 0 0 0 3px var(--blk); }
 .drag-ghost { position: fixed; z-index: 30; pointer-events: none; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;
               background: var(--blk); color: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); }
-body.moving, body.moving * { cursor: grabbing !important; user-select: none; }
+body.moving, body.moving * {
+  /* biome-ignore lint/complexity/noImportantStyles: every element under the pointer, links included, shows the grab cursor during a drag. */
+  cursor: grabbing !important; user-select: none; }
 body.moving .card:hover { transform: none; }
 .notitle .card { width: auto; min-width: 104px; text-align: center; }
 .notitle .card .ttl { display: none; }

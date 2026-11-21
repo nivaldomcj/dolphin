@@ -70,7 +70,8 @@ export function Arrows({ root, board, laneOf, showInLane, layoutKey }: Props) {
 
   return (
     // Sized by CSS (inset: 0 on the board). Measuring the board would include this overlay and it could never shrink.
-    <svg class="arrows">
+    // Decorative: the hover tip gives the same blockers as text, so screen readers skip the drawing.
+    <svg class="arrows" aria-hidden="true">
       <defs>
         <marker id="mS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
           <path d="M0,0L10,5L0,10z" style={{ fill: "var(--seq)" }} />
