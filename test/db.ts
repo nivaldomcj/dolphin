@@ -1,16 +1,13 @@
 import { db } from "../src/db";
 import { clearBoard } from "../src/core/clear-board";
+import type { Insertable } from "kysely";
 import type { LaneTable, TaskTable } from "../src/db/schema";
 
 /** Empties the board tables before a test; the lane rules (settings) stay. */
 export const resetDb = (): Promise<void> => clearBoard(db);
 
-type TaskRow = Omit<TaskTable, "closed" | "meta" | "cycle_number" | "cycle_state"> & {
-  closed?: number;
-  meta?: string;
-  cycle_number?: number | null;
-  cycle_state?: string | null;
-};
+/** What an insert takes: Kysely makes the generated columns (closed, meta, cycle) optional. */
+type TaskRow = Insertable<TaskTable>;
 
 /** A task row: an open Linear task titled after its id, with no meta, unless `over` says otherwise. */
 export const taskRow = (id: string, over: Partial<TaskRow> = {}): TaskRow => ({
