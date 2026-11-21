@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { config } from "../config";
 import { db } from "../db";
 import { writeRules } from "../core/rules";
 import { buildServer, handleMcp } from "./mcp";
@@ -104,4 +105,34 @@ test("the HTTP endpoint answers a stateless JSON-RPC call", async () => {
   const body = (await res.json()) as { id: number; result: { serverInfo: { name: string } } };
   expect(body.id).toBe(1);
   expect(body.result.serverInfo.name).toBe("dolphin");
+});
+
+test("reorder_lane sets the full order of a lane", async () => {
+  expect(json(await call("reorder_lane", { lane: "A", ids: ["T2", "T1"] }))).toEqual({ done: "Lane A reordered (2 tasks).", warnings: [] });
+  expect(json(await call("get_board")).lanes[0].ids).toEqual(["T2", "T1"]);
+});
+
+test("unplace_task takes a task out of its lane, into lane N", async () => {
+  expect(json(await call("unplace_task", { id: "T1" }))).toEqual({ done: "T1 removed from lane A.", warnings: [] });
+  const lanes = json(await call("get_board")).lanes.map((l: { key: string; ids: string[] }) => [l.key, l.ids]);
+  expect(lanes).toEqual([["A", ["T2"]], ["B", []], ["N", ["T1"]]]);
+});
+
+test("remove_edge deletes a dependency, and says when there was none", async () => {
+  await call("add_edge", { blocker: "T1", blocked: "T2" });
+
+  expect(json(await call("remove_edge", { blocker: "T1", blocked: "T2" })).done).toBe("T1 no longer blocks T2.");
+  expect(json(await call("remove_edge", { blocker: "T1", blocked: "T2" })).done).toBe("There was no edge T1 → T2.");
+  expect(json(await call("get_board")).edges).toEqual([]);
+});
+
+test("refresh reports what the trackers changed", async () => {
+  const saved = { linear: config.linear, github: config.github, backup: config.backup };
+  // No tracker and no backup, so the tool reaches neither the network nor the backup folder.
+  Object.assign(config, { linear: false, github: undefined, backup: false });
+  try {
+    expect(json(await call("refresh"))).toEqual({ changes: [], added: [], errors: {} });
+  } finally {
+    Object.assign(config, saved);
+  }
 });

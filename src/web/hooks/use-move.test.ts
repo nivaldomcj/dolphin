@@ -125,6 +125,35 @@ describe("dragging", () => {
     expect(fetch).not.toHaveBeenCalled();
     expect(document.body.classList.contains("moving")).toBe(false);
   });
+
+  test("a pointer the browser cancels ends the drag without a move", () => {
+    lanesInDom(start());
+    const fetch = spyOn(globalThis, "fetch");
+    const r = setup();
+
+    act(() => r.result.current.onGrab("T1", press()));
+    over = "B";
+    pointer("pointermove", 150);
+    pointer("pointercancel", 150, 0);
+
+    expect(r.result.current.drag).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  test("a button released outside the page cancels the drag", () => {
+    lanesInDom(start());
+    const fetch = spyOn(globalThis, "fetch");
+    const r = setup();
+
+    act(() => r.result.current.onGrab("T1", press()));
+    over = "B";
+    pointer("pointermove", 150);
+    // The next move arrives with no button down: the release happened where the page could not hear it.
+    pointer("pointermove", 160, 0);
+
+    expect(r.result.current.drag).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });
 
 describe("dropping", () => {
@@ -195,6 +224,19 @@ describe("dropping", () => {
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/board"));
     expect(moves(fetch)).toEqual([]);
+  });
+
+  test("a failed reload keeps the board the page shows", async () => {
+    lanesInDom(start());
+    const fetch = spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network down"));
+    const r = setup();
+
+    // A drop that changes nothing only reloads the board; that reload fails.
+    await dragTo(r, "T2", "A", 500);
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/board"));
+    expect(ids(r.result.current.board)).toEqual([["A", ["T1", "T2"]], ["B", ["T3"]]]);
+    expect(r.result.current.notice).toBeNull();
   });
 
   test("moves are sent one at a time, and only the newest reply replaces the board", async () => {
