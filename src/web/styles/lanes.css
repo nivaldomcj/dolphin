@@ -44,27 +44,23 @@
   padding-bottom: 6px;
 }
 
-/*
- * Dark mode: lane colors come from the data as pastels. Keep each hue but at a dark lightness and low chroma, so a
- * warm hue reads as a tinted grey rather than brown. These selectors outrank the base rules, so their place does not
- * matter.
- */
+/* Dark mode: lanes share a charcoal background, and their headers retain a subtle hint of the configured hue. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .lane {
-    background: oklch(from var(--lane-head) 0.225 calc(c * 0.28) h);
+    background: #1a1a1a;
   }
   :root:not([data-theme="light"]) .lane-head {
-    background: oklch(from var(--lane-head) 0.27 calc(c * 0.42) h);
+    background: oklch(from var(--lane-head) 0.27 calc(c * 0.2) h);
   }
   :root:not([data-theme="light"]) .lane-head:hover {
     filter: brightness(1.12);
   }
 }
 :root[data-theme="dark"] .lane {
-  background: oklch(from var(--lane-head) 0.225 calc(c * 0.28) h);
+  background: #1a1a1a;
 }
 :root[data-theme="dark"] .lane-head {
-  background: oklch(from var(--lane-head) 0.27 calc(c * 0.42) h);
+  background: oklch(from var(--lane-head) 0.27 calc(c * 0.2) h);
 }
 :root[data-theme="dark"] .lane-head:hover {
   filter: brightness(1.12);
